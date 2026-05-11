@@ -1,1 +1,4 @@
 .idea/
+**/.venv/
+**/.env
+backend/app/db/password.txt
