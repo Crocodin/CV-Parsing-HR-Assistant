@@ -82,11 +82,3 @@ Frontend
 ├── Dashboard screen        -> calls GET /candidates
 └── Candidate screen        -> calls GET /candidates/{id}
 ```
-
-## Key Reminders
-
-- **Ollama runs natively** — not in Docker. Has direct GPU access. FastAPI reaches it at `host.docker.internal:11434`
-- **Flutter runs natively** — not in Docker. Talks to FastAPI at `localhost:8000`
-- **Only FastAPI + PostgreSQL + Redis** run inside Docker
-- **Never recompute** — if a score or recommendation is already in the database, return it from there
-- **LLM only for top candidates** — embeddings score everyone, qwen3.5:4b only explains candidates above the match threshold
