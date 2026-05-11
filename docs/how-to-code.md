@@ -1,29 +1,29 @@
 ## First Time Setup
 
-**1. Clone the repo**
+**1. Clone the repo** <br>
 You can do this from GitHub Desktop.
 
-**2. Create your `.env` file**
+**2. Create your `.env` file** <br>
 It's on WhatsApp
 
-**3. Create your `.venv` file**
+**3. Create your `.venv` file** <br>
 Even if the app is on docker vsc still need to know what you are doing.
 Cristi use vsc it will make your life esier.
 
-**4. Create the database password file**
+**4. Create the database password file** <br>
 Create `backend/app/db/password.txt` and write just the password.
 
 
-**5. Install Ollama and pull the models**
+**5. Install Ollama and pull the models** <br>
 For now you  don't need this, but you will.
 ```bash
 ollama pull qwen3.5:4b
 ollama pull nomic-embed-text-v2-moe
 ```
 
-**6. Install Docker Desktop**
+**6. Install Docker Desktop** <br>
 
-**7. Start the project**
+**7. Start the project** <br>
 
 ```bash
 docker compose up           # start everything
