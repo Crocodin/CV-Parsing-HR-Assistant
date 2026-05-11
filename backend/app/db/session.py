@@ -3,4 +3,4 @@ from app.config import config
 
 
 # connection to PostgreSQL
-engine = create_engine(config.DATABASE_URL, echo=True)
+engine = create_engine(config.config.DATABASE_URL, echo=True)
