@@ -19,7 +19,7 @@ class OllamaService:
             print(f"Error generating response from Ollama: {e}")
             raise
     
-    @deprecated(reason="This method is deprecated because we are now generating the JSON from one prompt.")
+    @deprecated("This method is deprecated because we are now generating the JSON from one prompt.")
     # more information about why this method is deprecated can be found in the splitter.py file.
     def prompt_for_header(self, header: str, content: str) -> str:
         MAIN_PROMPT = f"""
@@ -34,7 +34,7 @@ class OllamaService:
             """
         return MAIN_PROMPT
     
-    @deprecated(reason="This method is deprecated because we are now generating the JSON from one prompt.")
+    @deprecated("This method is deprecated because we are now generating the JSON from one prompt.")
     # more information about why this method is deprecated can be found in the splitter.py file.
     def generate_json_for_header(self, header: str, content: str) -> str:
         prompt = self.prompt_for_header(header, content)
