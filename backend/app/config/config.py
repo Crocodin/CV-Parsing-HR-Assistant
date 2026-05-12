@@ -12,7 +12,7 @@ class Config():
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "cv-parser")
+    OLLAMA_MODEL = os.getenv("OLLAMA_LLM_MODEL", "cv-parser")
     OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
 
     @staticmethod
