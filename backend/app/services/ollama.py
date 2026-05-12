@@ -9,7 +9,7 @@ class OllamaService:
     def __init__(self):
         self.url = config.OLLAMA_URL
         self.client = ollama.Client(self.url)
-        self.model = config.OLLAMA_MODEL
+        self.model = config.OLLAMA_LLM_MODEL
 
     def generate_response(self, prompt: str) -> str:
         try:
