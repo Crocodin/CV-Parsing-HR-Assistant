@@ -23,6 +23,7 @@ services:
             - DB_PASSWORD_FILE=/run/secrets/db-password
             - REDIS_URL=redis://redis:6379
             - OLLAMA_URL=http://host.docker.internal:11434
+            - WATCHFILES_FORCE_POLLING=true
         secrets:
             - db-password
         depends_on:
