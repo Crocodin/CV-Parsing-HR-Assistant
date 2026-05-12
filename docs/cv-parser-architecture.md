@@ -54,7 +54,7 @@ User uploads PDF or DOCX
 pdfplumber / python-docx        -> raw text extraction
         ↓
 Custom section splitter         -> splits text into: header, education, experience, skills
-(rule-based, regex, no LLM)
+(rule-based, regex, no LLM)     -> `DEPRECATED` we are now generating the JSON from one prompt, see splitter.py for more details
         ↓
 Celery queue                    -> jobs processed one at a time, Ollama not hammered
         ↓ -> this layer of Celery is optional, we will se when developing if we have time to make this too
@@ -111,7 +111,6 @@ Rule: anything expensive to compute gets stored so it is never recomputed.
 ## Key Architectural Decisions
 
 - **No external APIs** — everything runs locally, no costs, no internet dependency
-- **Section-by-section LLM parsing** — smaller prompts = faster inference, more reliable JSON, easier debugging
 - **Embeddings for scoring, LLM for explanation** — fast semantic matching first, expensive LLM call only when needed
 - **Celery queue** — prevents Ollama from being hammered when multiple CVs are uploaded at once
 - **Alembic** — database schema changes tracked like code, no manual SQL alterations

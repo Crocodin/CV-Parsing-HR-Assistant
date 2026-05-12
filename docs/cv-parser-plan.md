@@ -23,7 +23,8 @@ cv-parser/
 │       │
 │       ├── services/ 
 │       │   ├── extractor.py        <- pdfplumber + python-docx
-│       │   ├── splitter.py         <- section splitter (regex)
+│       │   ├── splitter.py         <- `DEPRECATED` section splitter (regex)
+│       │   ├── merger.py           <- `DEPRECATED` section merger (combines JSON files)
 │       │   ├── ollama.py           <- qwen3.5:4b calls
 │       │   ├── embeddings.py       <- nomic-embed-text
 │       │   └── scorer.py
