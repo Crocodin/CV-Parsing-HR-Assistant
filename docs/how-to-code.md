@@ -48,5 +48,5 @@ git checkout -b feature/your-feature-name
 ```
 
 ## Docs
-- [Architecture Overview](docs/cv-parser-architecture.md)
-- [Project Plan & Task Split](docs/cv-parser-plan.md)
+- [Architecture Overview](cv-parser-architecture.md)
+- [Project Plan & Task Split](cv-parser-plan.md)
