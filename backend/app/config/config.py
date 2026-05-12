@@ -9,6 +9,12 @@ class Config():
     DB_NAME = os.getenv("DB_NAME", "cvparser")
     DB_USER = os.getenv("DB_USER", "postgres")
 
+    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "cv-parser")
+    OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+
     @staticmethod
     def get_password():
         secret_file = os.getenv("DB_PASSWORD_FILE")

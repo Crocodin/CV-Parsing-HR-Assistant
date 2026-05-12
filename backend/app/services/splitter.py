@@ -30,3 +30,5 @@ class Splitter:
             section.append(current_section)
 
         return section
+
+splitter = Splitter()

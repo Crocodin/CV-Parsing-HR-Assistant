@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from app.config import config
+from app.config.config import config
 
 
 # connection to PostgreSQL
-engine = create_engine(config.config.DATABASE_URL, echo=True)
+engine = create_engine(config.DATABASE_URL, echo=True)
