@@ -2,3 +2,5 @@
 **/.venv/
 **/.env
 backend/app/db/password.txt
+**/__pycache__/
+**/.DS_Store

@@ -4,7 +4,7 @@ from warnings import deprecated
 import json
 
 from app.config.config import config
-from backend.app.services.ollama_prompts import HEADER_JSON_STRUCTURE, OLLAMA_PROMPT
+from app.services.ollama_prompts import HEADER_JSON_STRUCTURE, OLLAMA_PROMPT
 
 class OllamaService:
     def __init__(self):
