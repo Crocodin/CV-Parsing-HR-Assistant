@@ -15,6 +15,14 @@ class Config():
     OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "cv-parser")
     OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
 
+    OLLAMA_LLM_PARAMS = {
+        "temperature": 0.1,
+        "seed": 0,
+        "top_k": 20,
+        "top_p": 0.7,
+        "min_p": 0.1
+    }
+
     @staticmethod
     def get_password():
         secret_file = os.getenv("DB_PASSWORD_FILE")
