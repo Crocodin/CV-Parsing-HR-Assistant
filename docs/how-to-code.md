@@ -50,3 +50,6 @@ git checkout -b feature/your-feature-name
 ## Docs
 - [Architecture Overview](cv-parser-architecture.md)
 - [Project Plan & Task Split](cv-parser-plan.md)
+
+> [!NOTE]
+> Better less code but written by you then a lot and vibe coded
