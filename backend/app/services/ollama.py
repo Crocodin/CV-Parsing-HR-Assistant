@@ -1,6 +1,7 @@
 import json
 import ollama
 from warnings import deprecated
+import json
 
 from app.config.config import config
 from app.services.ollama_promts import HEADER_JSON_STRUCTURE, OLLAMA_PROMPT
@@ -10,10 +11,11 @@ class OllamaService:
         self.url = config.OLLAMA_URL
         self.client = ollama.Client(self.url)
         self.model = config.OLLAMA_LLM_MODEL
+        self.llm_params = config.OLLAMA_LLM_PARAMS
 
     def generate_response(self, prompt: str) -> str:
         try:
-            response = self.client.generate(model=self.model, prompt=prompt)
+            response = self.client.generate(model=self.model, prompt=prompt, options=self.llm_params)
             return response.response
         except Exception as e:
             print(f"Error generating response from Ollama: {e}")
@@ -42,7 +44,6 @@ class OllamaService:
 
         try:
             # Try to parse the response as JSON
-            print(f"Ollama response for header {header}: {content}\n {json_text}")
             json_data = json.loads(json_text)
             return json_data
         
@@ -52,8 +53,7 @@ class OllamaService:
         
     def generate_json_for_cv(self, content: str) -> dict:
         try:
-            response = self.client.generate(model=self.model, system=OLLAMA_PROMPT, prompt=content)
-            print(f"Ollama response for CV: {response.response}")
+            response = self.client.generate(model=self.model, system=OLLAMA_PROMPT, prompt=content, options=self.llm_params)
 
             return json.loads(response.response)
         

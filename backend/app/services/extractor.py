@@ -34,8 +34,10 @@ class CVExtractor:
         if starting_bytes == b'%PDF-':
             return 'pdf'
         # docx files are fundeamentally zip files, so they start with 'PK' (Phil Katz)
-        return 'docx' if starting_bytes[:2] == b'PK' else 'unknown'
-    
+        if starting_bytes[:2] == b'PK':
+            return 'docx'
+        raise ValueError("Unknown file type")
+
     @staticmethod
     def extract_text(file_bytes: bytes) -> str:
         file_type = CVExtractor.what_is_file_type(file_bytes)
@@ -43,5 +45,3 @@ class CVExtractor:
             return CVExtractor.extract_pdf(file_bytes)
         elif file_type == 'docx':
             return CVExtractor.extract_docx(file_bytes)
-        else:
-            raise ValueError("Unsupported file type")
