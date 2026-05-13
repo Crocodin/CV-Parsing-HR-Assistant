@@ -70,7 +70,7 @@ Phase 1 — Foundation
 Phase 2 — Core Pipeline
 ├── extractor.py -> splitter.py -> ollama.py
 ├── Celery + Redis queue
-└── database models → embeddings.py → scorer.py
+└── database models → embeddings.py → scorer.py                 <=== WE ARE HERE NOW
 
 Phase 3 — API Endpoints
 ├── POST /jobs              -> upload job description
