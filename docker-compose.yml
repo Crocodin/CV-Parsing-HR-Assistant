@@ -24,7 +24,8 @@ services:
             - REDIS_URL=redis://redis:6379
             - OLLAMA_URL=http://host.docker.internal:11434
             - WATCHFILES_FORCE_POLLING=true
-            - OLLAMA_LLM_MODEL=qwen2.5:3b
+            - OLLAMA_LLM_MODEL=granite4.1:3b
+            - OLLAMA_EMBEDDING_MODEL=nomic-embed-text
         secrets:
             - db-password
         depends_on:
@@ -76,7 +77,8 @@ services:
             - DB_PASSWORD_FILE=/run/secrets/db-password
             - REDIS_URL=redis://redis:6379
             - OLLAMA_URL=http://host.docker.internal:11434
-            - OLLAMA_LLM_MODEL=qwen2.5:3b
+            - OLLAMA_LLM_MODEL=granite4.1:3b
+            - OLLAMA_EMBEDDING_MODEL=nomic-embed-text
         secrets:
             - db-password
         depends_on:
