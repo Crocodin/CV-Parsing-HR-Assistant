@@ -34,7 +34,7 @@ class Candidate(Base):
 
 
 class JobDescription(Base):
-    __tablename__ = "jobs_descriptions"
+    __tablename__ = "job_descriptions"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)

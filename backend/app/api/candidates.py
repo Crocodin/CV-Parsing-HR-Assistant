@@ -21,7 +21,7 @@ async def upload_cv(file: UploadFile):
         raise HTTPException(status_code=400, detail=str(e))
     
 
-@route.get("/cv-status/{task_id}")
+@route.get("/status/{task_id}")
 async def cv_status(task_id: str):
     task = AsyncResult(task_id)
     return {
