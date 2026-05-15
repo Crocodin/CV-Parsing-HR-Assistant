@@ -1,38 +1,48 @@
-from dotenv import load_dotenv 
 import os
+from dotenv import load_dotenv
 
-class Config():
-    load_dotenv()
 
-    DB_HOST = os.getenv("DB_HOST", "localhost")
-    DB_PORT = os.getenv("DB_PORT", "5432")
-    DB_NAME = os.getenv("DB_NAME", "cvparser")
-    DB_USER = os.getenv("DB_USER", "postgres")
+load_dotenv()
 
+
+class Config:
+    # Database
+    DB_HOST = os.getenv("POSTGRES_HOST", "db")
+    DB_PORT = int(os.getenv("POSTGRES_PORT", 5432))
+    DB_NAME = os.getenv("POSTGRES_DB", "cvparser")
+    DB_USER = os.getenv("POSTGRES_USER", "postgres")
+
+    # Redis
+    REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
+
+    # Ollama
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+    OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "granite4.1:3b")
+    OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "embeddinggemma:300m")
 
-    OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "cv-parser")
-    OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
-
+    # LLM Params
     OLLAMA_LLM_PARAMS = {
-        "temperature": 0.4,
-        "top_k": 10,
-        "top_p": 0.8,
-        "repeat_penalty": 1.05,
-        "num_ctx": 6144,
+        "temperature": float(os.getenv("OLLAMA_TEMPERATURE", 0.4)),
+        "top_k": int(os.getenv("OLLAMA_TOP_K", 10)),
+        "top_p": float(os.getenv("OLLAMA_TOP_P", 0.8)),
+        "repeat_penalty": float(os.getenv("OLLAMA_REPEAT_PENALTY", 1.05)),
+        "num_ctx": int(os.getenv("OLLAMA_NUM_CTX", 6144)),
     }
 
     @staticmethod
     def get_password():
-        secret_file = os.getenv("DB_PASSWORD_FILE")
+        secret_file = os.getenv("POSTGRES_PASSWORD_FILE")
+
         if secret_file and os.path.exists(secret_file):
-            with open(secret_file) as f:
+            with open(secret_file, "r") as f:
                 return f.read().strip()
-        return os.getenv("DB_PASSWORD", "password")
+
+        return os.getenv("POSTGRES_PASSWORD")
 
     @property
     def DATABASE_URL(self):
-        return f"postgresql://{self.DB_USER}:{self.get_password()}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        password = self.get_password()
+        return f"postgresql://{self.DB_USER}:{password}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
 
 config = Config()
