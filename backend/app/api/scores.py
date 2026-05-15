@@ -13,6 +13,15 @@ def trigger_scoring(candidate_id: int, job_id: int):
     task = score_candidate_task.delay(candidate_id, job_id)
     return {"task_id": task.id, "status": "processing"}
 
+@router.get("/status/{task_id}")
+def score_status(task_id: str):
+    task = AsyncResult(task_id)
+    return {
+        "task_id": task_id,
+        "status": task.status,
+        "result": task.result if task.status == "SUCCESS" else None
+    }
+
 @router.get("/{candidate_id}/{job_id}")
 def get_score(candidate_id: int, job_id: int, db: Session = Depends(get_db)):
     score = db.query(MatchResult).filter(
@@ -23,12 +32,3 @@ def get_score(candidate_id: int, job_id: int, db: Session = Depends(get_db)):
     if not score:
         raise HTTPException(status_code=404, detail="Score not found, trigger scoring first")
     return score
-
-@router.get("/status/{task_id}")
-def score_status(task_id: str):
-    task = AsyncResult(task_id)
-    return {
-        "task_id": task_id,
-        "status": task.status,
-        "result": task.result if task.status == "SUCCESS" else None
-    }

@@ -16,12 +16,11 @@ class Config():
     OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
 
     OLLAMA_LLM_PARAMS = {
-        "temperature": 0.7,
-        "seed": 0,
-        "top_k": 5,
-        "top_p": 0.2,
-        "min_p": 0.0,
-        "repeat_penalty": 1.05
+        "temperature": 0.4,
+        "top_k": 10,
+        "top_p": 0.8,
+        "repeat_penalty": 1.05,
+        "num_ctx": 6144,
     }
 
     @staticmethod

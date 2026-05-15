@@ -6,8 +6,9 @@ from app.services.embeddings import embedding_service
 from app.services.scorer import cosine_similarity
 from app.services.recommender import recommender_service
 from app.db.session import SessionLocal
-from app.models.raw_objects import Candidate, MatchResult, JobDescription
+from app.models.raw_objects import Candidate, MatchResult
 from app.models.embedded_objects import CandidateEmbedding, JobDescriptionEmbedding
+from app.services.splitter import clean_skills
 
 celery_app = Celery('tasks', broker=config.REDIS_URL, backend=config.REDIS_URL)
 celery_app.conf.task_track_started = True
@@ -19,6 +20,11 @@ def process_cv(file_bytes: bytes):
         text = CVExtractor.extract_text(file_bytes)
         # text to json
         merged_json = ollama_service.generate_json_for_cv(text)
+        print("Merged JSON:", merged_json)
+        raw_skills = merged_json.get("skills", [])
+        # clean skills (remove duplicates, filter out irrelevant ones)
+        cleaned_skills_list = clean_skills(raw_skills)   # returns list → for DB
+        cleaned_skills_text = ", ".join(cleaned_skills_list)
 
         candidate = Candidate(
             name=merged_json.get("personal", {}).get("name", "Unknown"),
@@ -26,7 +32,7 @@ def process_cv(file_bytes: bytes):
             phone=merged_json.get("personal", {}).get("phone"),
             linkedin=merged_json.get("personal", {}).get("linkedin"),
             summary=merged_json.get("summary", ""),
-            skills=merged_json.get("skills", []),
+            skills=raw_skills,  # save original skills as well
             experience=merged_json.get("experience", []),
             education=merged_json.get("education", []),
             certifications=merged_json.get("certifications", []),
@@ -50,10 +56,10 @@ def process_cv(file_bytes: bytes):
             for p in merged_json.get("projects", [])
         ])
         description_text = f"{merged_json.get('summary', '')} {experience_text} {projects_text}"
-        skills_text = " ".join(merged_json.get("skills", []))
 
         description_embedding = embedding_service.generate(description_text)
-        skills_embedding = embedding_service.generate(skills_text)
+        print(cleaned_skills_text)
+        skills_embedding = embedding_service.generate(cleaned_skills_text)
 
         # save embeddings
         candidate_embedding = CandidateEmbedding(
@@ -132,7 +138,7 @@ def score_candidate_task(candidate_id: int, job_id: int):
         else:
             match.text_score = float(text_score)
             match.skills_score = float(skills_score)
-            match.overall_score = float(skills_score)
+            match.overall_score = float(overall)
             recommendation = recommendation
             db.commit()
 

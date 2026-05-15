@@ -36,3 +36,14 @@ class Splitter:
         return section
 
 splitter = Splitter()
+
+def clean_skills(skills: list[str]) -> list[str]:
+    cleaned = []
+    for skill in skills:
+        skill = re.sub(r'^[\w\s\/]+:', '', skill).strip()
+        parts = skill.split(',')
+        for part in parts:
+            part = part.strip()
+            if len(part) > 1:
+                cleaned.append(part)
+    return cleaned 

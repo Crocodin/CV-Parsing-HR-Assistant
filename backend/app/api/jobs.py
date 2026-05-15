@@ -44,6 +44,13 @@ def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     _create_job_embedding(job.id, db)
     return {"job_id": job.id}
 
+@router.get("/{job_id}")
+def get_job(job_id: int, db: Session = Depends(get_db)):
+    job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
+    if not job:
+        raise ValueError("Job not found")
+    return job
+
 @router.post("/{job_id}/trigger")
 def create_job_embedding(job_id: int, db: Session = Depends(get_db)):
     _create_job_embedding(job_id, db)
