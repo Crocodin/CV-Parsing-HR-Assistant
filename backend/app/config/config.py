@@ -7,37 +7,34 @@ load_dotenv()
 
 class Config:
     # Database
-    DB_HOST = os.getenv("POSTGRES_HOST", "db")
-    DB_PORT = int(os.getenv("POSTGRES_PORT", 5432))
-    DB_NAME = os.getenv("POSTGRES_DB", "cvparser")
-    DB_USER = os.getenv("POSTGRES_USER", "postgres")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_PORT = int(os.getenv("DB_PORT"))
+    DB_NAME = os.getenv("DB_NAME")
+    DB_USER = os.getenv("DB_USER")
 
     # Redis
-    REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
+    REDIS_URL = os.getenv("REDIS_URL")
 
     # Ollama
-    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-    OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "granite4.1:3b")
-    OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "embeddinggemma:300m")
+    OLLAMA_URL = os.getenv("OLLAMA_URL")
+    OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL")
+    OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL")
 
     # LLM Params
     OLLAMA_LLM_PARAMS = {
-        "temperature": float(os.getenv("OLLAMA_TEMPERATURE", 0.4)),
-        "top_k": int(os.getenv("OLLAMA_TOP_K", 10)),
-        "top_p": float(os.getenv("OLLAMA_TOP_P", 0.8)),
-        "repeat_penalty": float(os.getenv("OLLAMA_REPEAT_PENALTY", 1.05)),
-        "num_ctx": int(os.getenv("OLLAMA_NUM_CTX", 6144)),
+        "temperature": float(os.getenv("OLLAMA_TEMPERATURE")),
+        "top_k": int(os.getenv("OLLAMA_TOP_K")),
+        "top_p": float(os.getenv("OLLAMA_TOP_P")),
+        "repeat_penalty": float(os.getenv("OLLAMA_REPEAT_PENALTY")),
+        "num_ctx": int(os.getenv("OLLAMA_NUM_CTX")),
     }
 
     @staticmethod
     def get_password():
-        secret_file = os.getenv("POSTGRES_PASSWORD_FILE")
-
+        secret_file = os.getenv("DB_PASSWORD_FILE")
         if secret_file and os.path.exists(secret_file):
             with open(secret_file, "r") as f:
                 return f.read().strip()
-
-        return os.getenv("POSTGRES_PASSWORD")
 
     @property
     def DATABASE_URL(self):

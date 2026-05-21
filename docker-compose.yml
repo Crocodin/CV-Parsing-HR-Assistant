@@ -9,17 +9,26 @@ services:
         volumes:
             - ./backend:/app
         environment: &app-env
-            DB_HOST: db
-            DB_PORT: 5432
-            DB_NAME: ${POSTGRES_DB}
-            DB_USER: ${POSTGRES_USER}
-            DB_PASSWORD_FILE: /run/secrets/db-password
+            API_PORT: ${API_PORT}
 
-            REDIS_URL: redis://redis:6379
+            DB_HOST: ${DB_HOST}
+            DB_PORT: ${DB_PORT}
+            DB_NAME: ${DB_NAME}
+            DB_USER: ${DB_USER}
+            DB_PASSWORD_FILE: ${DB_PASSWORD_FILE}
+
+            REDIS_PORT: ${REDIS_PORT}
+            REDIS_URL: ${REDIS_URL}
 
             OLLAMA_URL: ${OLLAMA_URL}
             OLLAMA_LLM_MODEL: ${OLLAMA_LLM_MODEL}
             OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL}
+
+            OLLAMA_TEMPERATURE: ${OLLAMA_TEMPERATURE}
+            OLLAMA_TOP_K: ${OLLAMA_TOP_K}
+            OLLAMA_TOP_P: ${OLLAMA_TOP_P}
+            OLLAMA_REPEAT_PENALTY: ${OLLAMA_REPEAT_PENALTY}
+            OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX}
 
             WATCHFILES_FORCE_POLLING: "true"
         secrets:
@@ -42,13 +51,13 @@ services:
         volumes:
             - db-data:/var/lib/postgresql
         environment:
-            POSTGRES_DB: ${POSTGRES_DB}
-            POSTGRES_USER: ${POSTGRES_USER}
-            POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+            POSTGRES_DB: ${DB_NAME}
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD_FILE: ${DB_PASSWORD_FILE}
         ports:
-            - "${POSTGRES_PORT}:5432"
+            - "${DB_PORT}:5432"
         healthcheck:
-            test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+            test: ["CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}"]
             interval: 10s
             timeout: 5s
             retries: 5
@@ -62,6 +71,7 @@ services:
             interval: 10s
             timeout: 5s
             retries: 5
+            start_period: 30s
     celery:
         build:
             context: ./backend
