@@ -1,5 +1,6 @@
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, DateTime, Integer, ForeignKey, func
+
 from app.db.session import Base
 
 class CandidateEmbedding(Base):
@@ -17,7 +18,7 @@ class JobDescriptionEmbedding(Base):
     __tablename__ = "job_description_embeddings"
 
     id = Column(Integer, primary_key=True, index=True)
-    job_description_id = Column(Integer, ForeignKey("jobs_descriptions.id", ondelete="CASCADE"))
+    job_description_id = Column(Integer, ForeignKey("job_descriptions.id", ondelete="CASCADE"))
     # for cosine similarity scoring
     description_embedding = Column(Vector(768))
     skills_embedding = Column(Vector(768))

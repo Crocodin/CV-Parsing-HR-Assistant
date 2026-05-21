@@ -1,66 +1,57 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.models.raw_objects import JobDescription
 from app.models.embedded_objects import JobDescriptionEmbedding
 from app.services.embeddings import embedding_service
-
-from app.services.scorer import score_candidate
+from app.models.shell_objects import JobCreate
 
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def _create_job_embedding(job_id: int, db: Session = Depends(get_db)):
+    print(f"Creating embedding for job {job_id}")
+    job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
+    if not job:
+        raise ValueError("Job not found")
+    
+    print(f"Generating embeddings for job {job_id}")
+
+    job_embedding = JobDescriptionEmbedding(
+        job_description_id=job_id,
+        description_embedding=embedding_service.generate(job.description),
+        skills_embedding=embedding_service.generate(" ".join(job.required_skills))
+    )
+    print(f"Saving embeddings for job {job_id}")
+    db.add(job_embedding)
+    db.commit()
 
 @router.post("/")
-def create_job(
-    title: str,
-    description: str,
-    required_skills: list[str],
-    min_years_experience: int,
-    location: str,
-    job_type: str,
-    db: Session = Depends(get_db)
-):
-
+def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     job = JobDescription(
-        title=title,
-        description=description,
-        required_skills=required_skills,
-        min_years_experience=min_years_experience,
-        location=location,
-        job_type=job_type
+        title=job_data.title,
+        description=job_data.description,
+        required_skills=job_data.required_skills,
+        min_years_experience=job_data.min_years_experience,
+        location=job_data.location,
+        job_type=job_data.job_type
     )
 
     db.add(job)
     db.commit()
     db.refresh(job)
-
-    skills_text = " ".join(required_skills)
-    description_text = description
-
-    job_embedding = JobDescriptionEmbedding(
-        job_description_id=job.id,
-        description_embedding=embedding_service.generate(description_text),
-        skills_embedding=embedding_service.generate(skills_text)
-    )
-
-    db.add(job_embedding)
-    db.commit()
-
+    _create_job_embedding(job.id, db)
     return {"job_id": job.id}
 
+@router.get("/{job_id}")
+def get_job(job_id: int, db: Session = Depends(get_db)):
+    job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
+    if not job:
+        raise ValueError("Job not found")
+    return job
 
-@router.get("/score")
-def get_score(
-    candidate_id: int,
-    job_id: int,
-    db: Session = Depends(get_db)
-):
-    return score_candidate(db, candidate_id, job_id)
+@router.post("/{job_id}/trigger")
+def create_job_embedding(job_id: int, db: Session = Depends(get_db)):
+    _create_job_embedding(job_id, db)
+    return {"status": "ok"}

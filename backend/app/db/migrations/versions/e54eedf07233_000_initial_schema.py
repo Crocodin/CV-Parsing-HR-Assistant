@@ -47,7 +47,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_candidates_id'), 'candidates', ['id'], unique=False)
     op.create_index(op.f('ix_candidates_name'), 'candidates', ['name'], unique=False)
-    op.create_table('jobs_descriptions',
+    op.create_table('job_descriptions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
@@ -59,8 +59,8 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_jobs_descriptions_id'), 'jobs_descriptions', ['id'], unique=False)
-    op.create_index(op.f('ix_jobs_descriptions_title'), 'jobs_descriptions', ['title'], unique=False)
+    op.create_index(op.f('ix_job_descriptions_id'), 'job_descriptions', ['id'], unique=False)
+    op.create_index(op.f('ix_job_descriptions_title'), 'job_descriptions', ['title'], unique=False)
     op.create_table('match_results',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('candidate_id', sa.Integer(), nullable=False),
@@ -89,7 +89,7 @@ def upgrade() -> None:
     sa.Column('description_embedding', Vector(768), nullable=True),
     sa.Column('skills_embedding', Vector(768), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-    sa.ForeignKeyConstraint(['job_description_id'], ['jobs_descriptions.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['job_description_id'], ['job_descriptions.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_job_description_embeddings_id'), 'job_description_embeddings', ['id'], unique=False)
@@ -105,9 +105,9 @@ def downgrade() -> None:
     op.drop_table('candidate_embeddings')
     op.drop_index(op.f('ix_match_results_id'), table_name='match_results')
     op.drop_table('match_results')
-    op.drop_index(op.f('ix_jobs_descriptions_title'), table_name='jobs_descriptions')
-    op.drop_index(op.f('ix_jobs_descriptions_id'), table_name='jobs_descriptions')
-    op.drop_table('jobs_descriptions')
+    op.drop_index(op.f('ix_job_descriptions_title'), table_name='job_descriptions')
+    op.drop_index(op.f('ix_job_descriptions_id'), table_name='job_descriptions')
+    op.drop_table('job_descriptions')
     op.drop_index(op.f('ix_candidates_name'), table_name='candidates')
     op.drop_index(op.f('ix_candidates_id'), table_name='candidates')
     op.drop_table('candidates')
