@@ -9,6 +9,15 @@ from app.models.raw_objects import Candidate
 
 route = APIRouter()
 
+@route.post("/extract-text")
+async def extract_text(file: UploadFile):
+    file_bytes = await file.read()
+    try:
+        text = CVExtractor.extract_text(file_bytes)
+        return {"text": text}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @route.get("/{candidate_id}")
 async def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()

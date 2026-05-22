@@ -9,6 +9,7 @@ from app.db.session import SessionLocal
 from app.models.raw_objects import Candidate, MatchResult
 from app.models.embedded_objects import CandidateEmbedding, JobDescriptionEmbedding
 from app.services.splitter import clean_skills
+from app.services.umap_points import compute_umap_points
 
 celery_app = Celery('tasks', broker=config.REDIS_URL, backend=config.REDIS_URL)
 celery_app.conf.task_track_started = True
@@ -147,6 +148,40 @@ def score_candidate_task(candidate_id: int, job_id: int):
     except Exception as e:
         db.rollback()
         print(f"Error scoring candidate: {e}")
+        raise
+
+    finally:
+        db.close()
+
+@celery_app.task
+def compute_umap():
+    db = SessionLocal()
+    try:
+        candidates = db.query(CandidateEmbedding).all()
+        jobs = db.query(JobDescriptionEmbedding).all()
+
+        candidate_embeddings_desc = [c.description_embedding for c in candidates]
+
+        job_embeddings_desc = [j.description_embedding for j in jobs]
+
+        # compute umap points for description embeddings
+        desc_points = compute_umap_points(candidate_embeddings_desc, job_embeddings_desc)
+
+        # update candidate embeddings with new points
+        for i, candidate in enumerate(candidates):
+            candidate.point_2D = desc_points["candidate_points"][i]  # or skills_points, depending on which you want to use
+            db.add(candidate)
+
+        # update job embeddings with new points
+        for j, job in enumerate(jobs):
+            job.point_2D = desc_points["job_points"][j]  # or skills_points, depending on which you want to use
+            db.add(job)
+
+        db.commit()
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error computing UMAP points: {e}")
         raise
 
     finally:

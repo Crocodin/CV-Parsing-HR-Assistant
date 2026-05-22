@@ -4,6 +4,7 @@ from fastapi.concurrency import asynccontextmanager
 from app.api.candidates import route as candidate_route
 from app.api.jobs import router as jobs_router
 from app.api.scores import router as scores_router
+from app.api.points_2d import router as umap_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,3 +27,4 @@ async def health_check():
 app.include_router(candidate_route, prefix="/candidate", tags=["candidate"])
 app.include_router(jobs_router, prefix="/jobs", tags=["jobs"])
 app.include_router(scores_router, prefix="/scores", tags=["scores"])
+app.include_router(umap_router, prefix="/umap", tags=["umap"])

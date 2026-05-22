@@ -11,6 +11,7 @@ class CandidateEmbedding(Base):
     # for cosine similarity scoring
     description_embedding = Column(Vector(768))
     skills_embedding = Column(Vector(768))
+    point_2D = Column(Vector(2))
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -22,5 +23,6 @@ class JobDescriptionEmbedding(Base):
     # for cosine similarity scoring
     description_embedding = Column(Vector(768))
     skills_embedding = Column(Vector(768))
+    point_2D = Column(Vector(2))
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
