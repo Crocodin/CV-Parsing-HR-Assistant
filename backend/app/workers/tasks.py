@@ -1,4 +1,7 @@
 from celery import Celery
+from sqlalchemy.orm import Session
+from fastapi import Depends
+
 from app.config.config import config
 from app.services.extractor import CVExtractor
 from app.services.ollama import ollama_service
@@ -10,6 +13,8 @@ from app.models.raw_objects import Candidate, MatchResult
 from app.models.embedded_objects import CandidateEmbedding, JobDescriptionEmbedding
 from app.services.splitter import clean_skills
 from app.services.umap_points import compute_umap_points
+from app.db.session import get_db
+from app.models.raw_objects import JobDescription
 
 celery_app = Celery('tasks', broker=config.REDIS_URL, backend=config.REDIS_URL)
 celery_app.conf.task_track_started = True
@@ -160,9 +165,9 @@ def compute_umap():
         candidates = db.query(CandidateEmbedding).all()
         jobs = db.query(JobDescriptionEmbedding).all()
 
-        candidate_embeddings_desc = [c.description_embedding for c in candidates]
+        candidate_embeddings_desc = [c.skills_embedding for c in candidates]
 
-        job_embeddings_desc = [j.description_embedding for j in jobs]
+        job_embeddings_desc = [j.skills_embedding for j in jobs]
 
         # compute umap points for description embeddings
         desc_points = compute_umap_points(candidate_embeddings_desc, job_embeddings_desc)
@@ -178,6 +183,7 @@ def compute_umap():
             db.add(job)
 
         db.commit()
+        return {"status": "done", "candidates": len(candidates), "jobs": len(jobs)}
 
     except Exception as e:
         db.rollback()
@@ -186,3 +192,17 @@ def compute_umap():
 
     finally:
         db.close()
+
+@celery_app.task
+def create_job_embedding(job_id: int, db: Session = Depends(get_db)):
+    job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
+    if not job:
+        raise ValueError("Job not found")
+
+    job_embedding = JobDescriptionEmbedding(
+        job_description_id=job_id,
+        description_embedding=embedding_service.generate(job.description),
+        skills_embedding=embedding_service.generate(" ".join(job.required_skills))
+    )
+    db.add(job_embedding)
+    db.commit()

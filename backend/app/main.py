@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.candidates import route as candidate_route
 from app.api.jobs import router as jobs_router
@@ -19,6 +20,19 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",   # Vite dev server
+        "app://.",
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+)
+
+app.root_path = "/api"
 
 @app.get("/health")
 async def health_check():

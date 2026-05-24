@@ -1,7 +1,7 @@
 import numpy as np 
 import umap
 
-def compute_umap(embeddings_candidate, embeddings_job, n_neighbors=15, min_dist=0.1, n_components=2):
+def compute_umap_points(embeddings_candidate, embeddings_job, n_neighbors=15, min_dist=0.1, n_components=2):
     """
         Uniform Manifold Approximation and Projection ofr Dimensioan Reduction
         https://umap-learn.readthedocs.io/en/latest/
@@ -19,10 +19,8 @@ def compute_umap(embeddings_candidate, embeddings_job, n_neighbors=15, min_dist=
     )
 
     all_points = reducer.fit_transform(np.vstack([embeddings_candidate, embeddings_job]))
+    
     return {
-        "candidate_points" : all_points[:len(embeddings_candidate)],
-        "job_points" : all_points[len(embeddings_candidate):]
+        "candidate_points": [point.tolist() for point in all_points[:len(embeddings_candidate)]],
+        "job_points": [point.tolist() for point in all_points[len(embeddings_candidate):]]
     }
-
-def compute_umap_points(embeddings_candidate, embeddings_job):
-    return compute_umap(embeddings_candidate, embeddings_job)

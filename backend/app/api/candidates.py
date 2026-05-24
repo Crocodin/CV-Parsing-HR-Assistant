@@ -9,6 +9,11 @@ from app.models.raw_objects import Candidate
 
 route = APIRouter()
 
+@route.get("/all")
+async def get_all_candidates(db: Session = Depends(get_db)):
+    candidates = db.query(Candidate).all()
+    return candidates
+
 @route.post("/extract-text")
 async def extract_text(file: UploadFile):
     file_bytes = await file.read()
