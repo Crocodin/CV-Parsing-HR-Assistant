@@ -19,6 +19,10 @@ $radius-lg:         30px;
   --skill-background-color:     #{$color-forth};
   --skill-font-family:          #{$font-sans};
   --skill-text-color:           #{$color-third};
+  --title-height:               calc(
+    2.5rem + 40px + 0.67em + 20px + 40px + 36px
+    );
+    // title font size + title padding + line height + buttons padding + buttons margin
 }
 
 * {

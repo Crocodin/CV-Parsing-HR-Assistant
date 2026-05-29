@@ -5,4 +5,6 @@ export type CVPoint2D = {
 
   id: number;
   type: 'cv' | 'job';
+  name: string;
+  score: number;
 };

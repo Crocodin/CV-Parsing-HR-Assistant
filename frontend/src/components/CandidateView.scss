@@ -1,0 +1,61 @@
+@use '../index.scss' as *;
+
+.main-container {
+  display: grid;
+  grid-template-columns: 2fr 5fr;
+  height: calc(100vh - var(--title-height));
+}
+
+.candidates {
+  height: calc(100vh - var(--title-height) - 40px); /* 40px is the padding of upload-container */
+  overflow-y: auto;
+
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.candidates::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.left {
+  height: 100%;
+}
+
+.upload-container,
+.candidate-card {
+  background-color: var(--canvas-background-color);
+  color: var(--text-default-color);
+  margin: 10px;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.right {
+  height: 100%;
+  color: var(--text-default-color);
+  margin-inline: 20px;
+}
+
+.upload-button-container {
+  height: 100%;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+}
+
+.summary {
+  margin: 20px;
+}
+
+.upload-button {
+  padding: 10px 15px;
+  background-color: var(--skill-background-color);
+  color: var(--skill-text-color);
+  font-family: var(--skill-font-family);
+  @include roboto(700, 100);
+  border: none;
+  cursor: pointer;
+}
