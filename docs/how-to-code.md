@@ -41,6 +41,15 @@ docker compose down         # stop everything
 docker compose up --build   # use only if you changed requirements.txt or Dockerfile
 ```
 
+## Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev       # development
+npm run build     # production build
+```
+
 ## Git
 
 - **NEVER commit directly to `main`**

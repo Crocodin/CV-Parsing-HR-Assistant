@@ -1,0 +1,93 @@
+@use "../index.scss" as *; 
+
+.view-embeddings {
+  font-family: var(--text-default-font);
+  color: var(--text-default-color);
+
+  display: grid;
+  grid-template-columns: 3fr 5fr;
+
+  height: calc(100vh - var(--title-height));
+  background-color: var(--background-default-color);
+}
+
+.embedding-details,
+.deck-wrapper {
+  background-color: var(--canvas-background-color);
+}
+
+.embedding-canvas {
+  margin: 20px;
+}
+
+.embedding-details {
+  padding: 20px;
+  margin: 20px;
+  position: relative;
+}
+
+.cv-details {
+  margin-top: 20px;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.skill {
+  display: inline-block;
+  padding: 3px 10px;
+  background-color: var(--skill-background-color);
+
+  min-width: 70px;
+  text-align: center;
+  font-size: 13px;
+  font-family: var(--skill-font-family);
+  color: var(--skill-text-color);
+  @include roboto(700, 100);
+}
+
+.devider {
+  height: 1px;
+  background-color: var(--text-default-color);
+  margin: 15px 0;
+}
+
+.personal-info > p {
+  font-size: 13px;
+}
+
+.view-cv-button {
+  padding: 10px 15px;
+  min-width: 200px;
+  position: absolute;
+  bottom: 0px;
+  transform: translateY(-50%) translateX(-50%);
+  left: 50%;
+
+  background-color: var(--skill-background-color);
+  color: var(--skill-text-color);
+  font-family: var(--skill-font-family);
+  @include roboto(700, 100);
+  border: none;
+  cursor: pointer;
+}
+
+.summary {
+  margin-top: 20px;
+  font-size: 14px;
+  text-align: justify;
+}
+
+@media (max-width: 875px) {
+  .view-embeddings {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .embedding-canvas {
+    order: -1; 
+  }
+}

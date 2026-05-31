@@ -31,6 +31,9 @@ services:
             OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX}
 
             WATCHFILES_FORCE_POLLING: "true"
+
+            NUMBA_DISABLE_JIT: "1"
+            NUMBA_CACHE_DIR: /tmp/numba_cache
         secrets:
             - db-password
         depends_on:

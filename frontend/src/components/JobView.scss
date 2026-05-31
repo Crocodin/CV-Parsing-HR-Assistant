@@ -1,0 +1,152 @@
+@use '../index.scss' as *;
+
+.main-container {
+  display: grid;
+  grid-template-columns: 2fr 5fr;
+  height: calc(100vh - var(--title-height));
+}
+
+.left {
+  height: 100%;
+}
+
+.right {
+  height: 100%;
+  margin-inline: 20px;
+  color: var(--text-default-color);
+  overflow-y: auto;
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.right::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar {
+  height: calc(100vh - var(--title-height) - 100px);
+  overflow-y: auto;
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.upload-container,
+.job-card,
+.job-details {
+  background-color: var(--canvas-background-color);
+  color: var(--text-default-color);
+  margin: 10px;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  h2 {
+    margin: 0;
+    cursor: pointer;
+  }
+
+  input {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-default-color);
+
+    &:focus {
+      outline: 2px solid var(--skill-background-color);
+    }
+  }
+
+  input[type='button'] {
+    background-color: var(--skill-background-color);
+    color: var(--skill-text-color);
+    font-family: var(--skill-font-family);
+    @include roboto(700, 100);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+}
+
+.jobs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.job-card {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  h3 {
+    margin: 0;
+    text-align: center;
+  }
+}
+
+.job-details {
+  margin-top: 10px;
+}
+
+.general-info {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  @include roboto(700, 2rem);
+}
+
+.small-info {
+  margin-top: 8px;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.skill {
+  background-color: var(--skill-background-color);
+  color: var(--skill-text-color);
+  font-family: var(--skill-font-family);
+  @include roboto(500, 0.9rem);
+
+  padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.description {
+  line-height: 1.6;
+  white-space: pre-wrap;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}

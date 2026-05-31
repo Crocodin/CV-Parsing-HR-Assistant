@@ -1,4 +1,5 @@
 from celery import Celery
+
 from app.config.config import config
 from app.services.extractor import CVExtractor
 from app.services.ollama import ollama_service
@@ -9,12 +10,15 @@ from app.db.session import SessionLocal
 from app.models.raw_objects import Candidate, MatchResult
 from app.models.embedded_objects import CandidateEmbedding, JobDescriptionEmbedding
 from app.services.splitter import clean_skills
+from app.services.umap_points import compute_umap_points
+from app.db.session import get_db
+from app.models.raw_objects import JobDescription
 
 celery_app = Celery('tasks', broker=config.REDIS_URL, backend=config.REDIS_URL)
 celery_app.conf.task_track_started = True
 
 @celery_app.task
-def process_cv(file_bytes: bytes):
+def process_cv(file_bytes: bytes, cv_file_path: str = None):
     db = SessionLocal()
     try:
         text = CVExtractor.extract_text(file_bytes)
@@ -40,7 +44,8 @@ def process_cv(file_bytes: bytes):
             projects=merged_json.get("projects", []),
             achievements=merged_json.get("achievements", []),
             publications=merged_json.get("publications", []),
-            status="PROCESSING"
+            status="PROCESSING",
+            cv_file_path=cv_file_path
         )
         db.add(candidate)
         db.commit()
@@ -151,3 +156,57 @@ def score_candidate_task(candidate_id: int, job_id: int):
 
     finally:
         db.close()
+
+@celery_app.task
+def compute_umap():
+    db = SessionLocal()
+    try:
+        candidates = db.query(CandidateEmbedding).all()
+        jobs = db.query(JobDescriptionEmbedding).all()
+
+        candidate_embeddings_desc = [c.skills_embedding for c in candidates]
+
+        job_embeddings_desc = [j.skills_embedding for j in jobs]
+
+        # compute umap points for description embeddings
+        desc_points = compute_umap_points(candidate_embeddings_desc, job_embeddings_desc)
+
+        # update candidate embeddings with new points
+        for i, candidate in enumerate(candidates):
+            candidate.point_2D = desc_points["candidate_points"][i]  # or skills_points, depending on which you want to use
+            db.add(candidate)
+
+        # update job embeddings with new points
+        for j, job in enumerate(jobs):
+            job.point_2D = desc_points["job_points"][j]  # or skills_points, depending on which you want to use
+            db.add(job)
+
+        db.commit()
+        return {"status": "done", "candidates": len(candidates), "jobs": len(jobs)}
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error computing UMAP points: {e}")
+        raise
+
+    finally:
+        db.close()
+
+@celery_app.task
+def create_job_embedding(job_id: int):
+    db = SessionLocal()
+    try:
+        job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
+        if not job:
+            raise ValueError("Job not found")
+
+        job_embedding = JobDescriptionEmbedding(
+            job_description_id=job_id,
+            description_embedding=embedding_service.generate(job.description),
+            skills_embedding=embedding_service.generate(" ".join(job.required_skills))
+        )
+        db.add(job_embedding)
+        db.commit()
+    finally:
+        db.close()
+
