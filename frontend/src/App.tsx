@@ -4,13 +4,17 @@ import ViewEmbeddings from './components/ViewEmbeddings';
 import type { CVPoint2D } from './model/CVPoint2D';
 import type { JobPoint2D } from './model/JobPoint2D';
 import EmbeddingAPI from './api/EmbeddingAPI';
+import CandidateAPI from './api/CandidateAPI';
 import CandidateView from './components/CandidateView';
+import type { CV } from './model/CV';
 
 function App() {
   const [cvPoints, setCvPoints] = useState<CVPoint2D[]>([]);
   const [jobPoints, setJobPoints] = useState<JobPoint2D[]>([]);
   const [loadingPoints, setLoadingPoints] = useState(true);
   const [window, setWindow] = useState<string>("home");
+
+  const [candidatesShell, setCandidatesShell] = useState<CV[]> ([]);
 
   useEffect(() => {
     EmbeddingAPI.getAllPoints()
@@ -21,6 +25,14 @@ function App() {
       .catch((err) => console.error(err))
       .finally(() => setLoadingPoints(false));
       console.log("Fetched points:", {cvPoints, jobPoints});
+
+    // fetch candidates shell data
+    CandidateAPI.getAllCandidates()
+      .then((data) => {
+        setCandidatesShell(data);
+        console.log("Fetched candidates shell data:", data);
+      })
+      .catch((err) => console.error('Error fetching candidates shell data:', err));
   }, []);
 
   if (loadingPoints) return (
@@ -30,7 +42,6 @@ function App() {
       </svg>
     </div>
   );
-
 
   return (
     <>
@@ -55,7 +66,7 @@ function App() {
       )}
 
       {window === "candidates" && (
-        <CandidateView cv={cvPoints}/>
+        <CandidateView cv={candidatesShell} cvUpdated={setCandidatesShell}/>
       )}
 
       {window === "map" && (

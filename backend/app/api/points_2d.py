@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.embedded_objects import CandidateEmbedding, JobDescriptionEmbedding
 from app.workers.tasks import compute_umap, celery_app
-from app.models.raw_objects import Candidate
 
 router = APIRouter()
 
@@ -21,52 +20,18 @@ def umap_status(task_id: str):
     return {
         "task_id": task_id,
         "status": task.status,
-        "result": task.result if task.status == "SUCCESS" else None
     }
 
 @router.get("/points")
 def get_all_umap_points(db: Session = Depends(get_db)):
-
-    candidate_points = (
-        db.query(
-            Candidate.id,
-            Candidate.name,
-            CandidateEmbedding.point_2D
-        )
-        .join(CandidateEmbedding, CandidateEmbedding.candidate_id == Candidate.id)
-        .filter(CandidateEmbedding.point_2D.isnot(None))
-        .all()
-    )
-
-    job_points = (
-        db.query(
-            JobDescriptionEmbedding.job_description_id,
-            JobDescriptionEmbedding.point_2D
-        )
-        .filter(JobDescriptionEmbedding.point_2D.isnot(None))
-        .all()
-    )
+    candidate_points = db.query(CandidateEmbedding.candidate_id, CandidateEmbedding.point_2D)\
+        .filter(CandidateEmbedding.point_2D != None).all()
+    job_points = db.query(JobDescriptionEmbedding.job_description_id, JobDescriptionEmbedding.point_2D)\
+        .filter(JobDescriptionEmbedding.point_2D != None).all()
 
     return {
-        "candidate_points": [
-            {
-                "id": c[0],
-                "name": c[1],
-                "x": float(c[2][0]),
-                "y": float(c[2][1]),
-                "type": "cv"
-            }
-            for c in candidate_points
-        ],
-        "job_points": [
-            {
-                "id": j[0],
-                "x": float(j[1][0]),
-                "y": float(j[1][1]),
-                "type": "job"
-            }
-            for j in job_points
-        ]
+        "candidate_points": [{"id": cp[0], "x": float(cp[1][0]), "y": float(cp[1][1]), "type": "cv"} for cp in candidate_points],
+        "job_points": [{"id": jp[0], "x": float(jp[1][0]), "y": float(jp[1][1]), "type": "job"} for jp in job_points]
     }
 
 @router.get("/points/{candidate_id}/{job_id}")

@@ -9,19 +9,25 @@ class CandidateAPI {
   }
 
   static async getAllCandidates(): Promise<CV[]> {
-    const response = await api.get('/candidate/all');
+    const response = await api.get('/candidate/all/shell');
     return response.data;
   }
 
-  static async uploadCV(file: File): Promise<Task> {
+  static async uploadCV(file: File, cv_file_path: string): Promise<Task> {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('cv_file_path', cv_file_path);
 
-    const response = await api.post('/candidate/upload', formData, {
+    const response = await api.post('/candidate/upload-cv', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  }
+
+  static async getTaskStatus(taskId: string): Promise<Task> {
+    const response = await api.get(`/candidate/status/${taskId}`);
     return response.data;
   }
 }

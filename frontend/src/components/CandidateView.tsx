@@ -1,11 +1,10 @@
-import type { CVPoint2D } from "../model/CVPoint2D";
 import type { CV } from "../model/CV";
 import { useState, useEffect } from "react";
 import CandidateAPI from "../api/CandidateAPI";
 import './CandidateView.scss';
 
-function CandidateView({cv}: {cv: CVPoint2D[]}) {
-  const [clickedCandidate, setClickedCandidate] = useState<CVPoint2D | null>(null);
+function CandidateView({cv, cvUpdated}: {cv: CV[], cvUpdated: (updatedCv: CV[]) => void}) {
+  const [clickedCandidate, setClickedCandidate] = useState<CV | null>(null);
   const [candidate, setCandidate] = useState<CV | null>(null);
 
   useEffect(() => {
@@ -22,6 +21,48 @@ function CandidateView({cv}: {cv: CVPoint2D[]}) {
       setCandidate(null);
     }
   }, [clickedCandidate]);
+
+  const pollTaskStatus = (taskId: string) => {
+    const intervalId = setInterval(() => {
+      CandidateAPI.getTaskStatus(taskId)
+        .then((task) => {
+          console.log("Polled task status:", task);
+          if (task.status === "SUCCESS") {
+            clearInterval(intervalId);
+            // refetch candidates shell data to update the list with the new candidate
+            CandidateAPI.getAllCandidates()
+              .then((data) => {
+                cvUpdated(data);
+                console.log("Refetched candidates shell data:", data);
+              })
+              .catch((err) => console.error('Error refetching candidates shell data:', err));
+          } else if (task.status === "FAILED") {
+            clearInterval(intervalId);
+            console.error('Task failed:', task);
+          }
+        })
+        .catch((error) => {
+          clearInterval(intervalId);
+          console.error('Error polling task status:', error);
+        });
+    }, 5000); // poll every 5 seconds
+  }
+
+  const handleUpload = async (file: File) => {
+    console.log(window.electronAPI)
+    // 1. save file locally via Electron
+    if (!window.electronAPI) {
+      console.error("Electron API not available");
+      return;
+    }
+    const fileBuffer = await file.arrayBuffer()
+    const savedPath = await window.electronAPI.saveFile(file.name, fileBuffer)
+
+    // 2. upload to FastAPI with the saved path
+    CandidateAPI.uploadCV(file, savedPath)
+      .then((task) => pollTaskStatus(task.task_id))
+      .catch((err) => console.error(err))
+  }
 
   return (
     <div className="main-container">
@@ -48,7 +89,12 @@ function CandidateView({cv}: {cv: CVPoint2D[]}) {
       <div className="right">
         {clickedCandidate === null && (
           <div className="upload-button-container">
-            <input type="file" id="cv-upload" style={{ display: 'none' }} accept=".pdf,.doc,.docx"/>
+            <input type="file" id="cv-upload" style={{ display: 'none' }} accept=".pdf,.doc,.docx" onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (!file) return;
+              handleUpload(file);
+              alert("CV uploaded successfully! It may take a few moments to process. Please check back later to see the details.");
+            }}/>
             <label htmlFor="cv-upload" className="upload-button rounded-sm">
               Upload CV
             </label>

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from app.db.session import get_db
 from app.models.raw_objects import JobDescription
@@ -30,6 +31,15 @@ def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
 def get_all_jobs(db: Session = Depends(get_db)):
     jobs = db.query(JobDescription).all()
     return jobs
+
+class JobShell(BaseModel):
+    id: int
+    title: str
+
+@router.get("/all/shell", response_model=list[JobShell])
+def get_all_jobs(db: Session = Depends(get_db)):
+    jobs = db.query(JobDescription.id, JobDescription.title).all()
+    return [{"id": j[0], "title": j[1]} for j in jobs]
 
 @router.get("/{job_id}")
 def get_job(job_id: int, db: Session = Depends(get_db)):

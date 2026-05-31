@@ -1,6 +1,7 @@
 from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, UploadFile, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from app.services.extractor import CVExtractor
 from app.workers.tasks import process_cv
@@ -13,6 +14,15 @@ route = APIRouter()
 async def get_all_candidates(db: Session = Depends(get_db)):
     candidates = db.query(Candidate).all()
     return candidates
+
+class CandidateShell(BaseModel):
+    id: int
+    name: str
+
+@route.get("/all/shell", response_model=list[CandidateShell])
+async def get_all_candidates(db: Session = Depends(get_db)):
+    candidates = db.query(Candidate.id, Candidate.name).all()
+    return [{"id": c[0], "name": c[1]} for c in candidates]
 
 @route.post("/extract-text")
 async def extract_text(file: UploadFile):
@@ -32,12 +42,12 @@ async def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     
 
 @route.post("/upload-cv")
-async def upload_cv(file: UploadFile):
+async def upload_cv(file: UploadFile, cv_file_path: str = None):
     file_bytes = await file.read()
     try:        
         CVExtractor.what_is_file_type(file_bytes)  # this will raise an error if the file type is unknown
         
-        task = process_cv.delay(file_bytes)
+        task = process_cv.delay(file_bytes, cv_file_path)
 
         return { "status": "processing", "task_id": task.id }
     except ValueError as e:
@@ -51,5 +61,4 @@ async def cv_status(task_id: str):
     return {
         "task_id": task_id,
         "status": task.status,
-        "result": task.result if task.status == "SUCCESS" else None
     }

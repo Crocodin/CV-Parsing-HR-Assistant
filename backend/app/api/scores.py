@@ -19,7 +19,6 @@ def score_status(task_id: str):
     return {
         "task_id": task_id,
         "status": task.status,
-        "result": task.result if task.status == "SUCCESS" else None
     }
 
 @router.get("/{candidate_id}/{job_id}")

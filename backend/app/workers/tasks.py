@@ -20,7 +20,7 @@ celery_app = Celery('tasks', broker=config.REDIS_URL, backend=config.REDIS_URL)
 celery_app.conf.task_track_started = True
 
 @celery_app.task
-def process_cv(file_bytes: bytes):
+def process_cv(file_bytes: bytes, cv_file_path: str = None):
     db = SessionLocal()
     try:
         text = CVExtractor.extract_text(file_bytes)
@@ -46,7 +46,8 @@ def process_cv(file_bytes: bytes):
             projects=merged_json.get("projects", []),
             achievements=merged_json.get("achievements", []),
             publications=merged_json.get("publications", []),
-            status="PROCESSING"
+            status="PROCESSING",
+            cv_file_path=cv_file_path
         )
         db.add(candidate)
         db.commit()

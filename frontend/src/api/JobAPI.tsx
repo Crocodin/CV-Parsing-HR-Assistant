@@ -8,7 +8,7 @@ class JobAPI {
   }
 
   static async getAllJobs(): Promise<Job[]> {
-    const response = await api.get('/jobs/all');
+    const response = await api.get('/jobs/all/shell');
     return response.data;
   }
 }
