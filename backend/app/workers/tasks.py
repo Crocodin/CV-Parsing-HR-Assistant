@@ -1,105 +1,84 @@
 from celery import Celery
 
 from app.config.config import config
+from app.db.session import SessionLocal
+
+from app.models.shell_objects import CandidateCreate
+from app.models.embedded_objects import JobDescriptionEmbedding
+from app.models.embedded_objects import CandidateEmbedding
+
+from app.repositories.job_repository import jobRepository, jobEmbeddingRepository
+from app.repositories.match_repository import matchRepository
+from app.repositories.candidate_repository import candidateRepository, candidateEmbeddingRepository
+
 from app.services.extractor import CVExtractor
 from app.services.ollama import ollama_service
 from app.services.embeddings import embedding_service
 from app.services.scorer import cosine_similarity
 from app.services.recommender import recommender_service
-from app.db.session import SessionLocal
-from app.models.raw_objects import Candidate, MatchResult
-from app.models.embedded_objects import CandidateEmbedding, JobDescriptionEmbedding
 from app.services.splitter import clean_skills
 from app.services.umap_points import compute_umap_points
-from app.db.session import get_db
-from app.models.raw_objects import JobDescription
 
 celery_app = Celery('tasks', broker=config.REDIS_URL, backend=config.REDIS_URL)
 celery_app.conf.task_track_started = True
 
 @celery_app.task
 def process_cv(file_bytes: bytes, cv_file_path: str = None):
-    db = SessionLocal()
-    try:
-        text = CVExtractor.extract_text(file_bytes)
-        # text to json
-        merged_json = ollama_service.generate_json_for_cv(text)
-        print("Merged JSON:", merged_json)
-        raw_skills = merged_json.get("skills", [])
-        # clean skills (remove duplicates, filter out irrelevant ones)
-        cleaned_skills_list = clean_skills(raw_skills)   # returns list → for DB
-        cleaned_skills_text = ", ".join(cleaned_skills_list)
+    text = CVExtractor.extract_text(file_bytes)
+    # text to json
+    merged_json = ollama_service.generate_json_for_cv(text)
+    raw_skills = merged_json.get("skills", [])
+    # clean skills (remove duplicates, filter out irrelevant ones)
+    cleaned_skills_list = clean_skills(raw_skills)
+    cleaned_skills_text = ", ".join(cleaned_skills_list)
 
-        candidate = Candidate(
-            name=merged_json.get("personal", {}).get("name", "Unknown"),
-            email=merged_json.get("personal", {}).get("email"),
-            phone=merged_json.get("personal", {}).get("phone"),
-            linkedin=merged_json.get("personal", {}).get("linkedin"),
-            summary=merged_json.get("summary", ""),
-            skills=raw_skills,  # save original skills as well
-            experience=merged_json.get("experience", []),
-            education=merged_json.get("education", []),
-            certifications=merged_json.get("certifications", []),
-            languages=merged_json.get("languages", []),
-            projects=merged_json.get("projects", []),
-            achievements=merged_json.get("achievements", []),
-            publications=merged_json.get("publications", []),
-            status="PROCESSING",
-            cv_file_path=cv_file_path
-        )
-        db.add(candidate)
-        db.commit()
-        db.refresh(candidate)
+    personal = merged_json.get("personal", {})
+    candidate_data = CandidateCreate(
+        name=personal.get("name", "Unknown"),
+        email=personal.get("email"),
+        phone=personal.get("phone"),
+        linkedin=personal.get("linkedin"),
+        summary=merged_json.get("summary", ""),
+        skills=cleaned_skills_list,
+        experience=merged_json.get("experience", []),
+        education=merged_json.get("education", []),
+        certifications=merged_json.get("certifications", []),
+        languages=merged_json.get("languages", []),
+        projects=merged_json.get("projects", []),
+        achievements=merged_json.get("achievements", []),
+        publications=merged_json.get("publications", []),
+        cv_file_path=cv_file_path
+    )
 
-        # 4. build description text (summary + experience + projects)
-        experience_text = " ".join([
-            f"{e.get('job_title', '')} at {e.get('company', '')}: {e.get('description', '')}"
-            for e in merged_json.get("experience", [])
-        ])
-        projects_text = " ".join([
-            f"{p.get('name', '')}: {p.get('description', '')}"
-            for p in merged_json.get("projects", [])
-        ])
-        description_text = f"{merged_json.get('summary', '')} {experience_text} {projects_text}"
+    candidate = candidateRepository.add_candidate(candidate_data)
 
-        description_embedding = embedding_service.generate(description_text)
-        print(cleaned_skills_text)
-        skills_embedding = embedding_service.generate(cleaned_skills_text)
+    # build description text
+    experience_text = " ".join([
+        f"{e.get('job_title', '')} at {e.get('company', '')}: {e.get('description', '')}"
+        for e in merged_json.get("experience", [])
+    ])
+    projects_text = " ".join([
+        f"{p.get('name', '')}: {p.get('description', '')}"
+        for p in merged_json.get("projects", [])
+    ])
+    description_text = f"{merged_json.get('summary', '')} {experience_text} {projects_text}"
 
-        # save embeddings
-        candidate_embedding = CandidateEmbedding(
-            candidate_id=candidate.id,
-            description_embedding=description_embedding,
-            skills_embedding=skills_embedding
-        )
-        db.add(candidate_embedding)
-        db.commit()
+    embedding_service.generate_for_candidate(
+        candidate_id=candidate.id,
+        description_text=description_text,
+        skills_text=cleaned_skills_text
+    )
 
-        # mark as DONE
-        candidate.status = "DONE"
-        db.commit()
-
-        return {"candidate_id": candidate.id, "status": "DONE"}
-
-    except Exception as e:
-        db.rollback()
-        print(f"Error processing CV: {e}")
-        raise
-    finally:
-        db.close()
+    candidate.status = "DONE"
+    return {"candidate_id": candidate.id, "status": "DONE"}
 
 
 @celery_app.task
 def score_candidate_task(candidate_id: int, job_id: int):
     db = SessionLocal()
     try:
-        candidate_emb = db.query(CandidateEmbedding).filter(
-            CandidateEmbedding.candidate_id == candidate_id
-        ).first()
-
-        job_emb = db.query(JobDescriptionEmbedding).filter(
-            JobDescriptionEmbedding.job_description_id == job_id
-        ).first()
+        candidate_emb: CandidateEmbedding = candidateEmbeddingRepository.get_candidate_embedding_by_candidate_id(candidate_id)
+        job_emb: JobDescriptionEmbedding = jobEmbeddingRepository.get_job_embedding_by_job_id(job_id)
 
         if not candidate_emb or not job_emb:
             raise ValueError("Embeddings not found")
@@ -115,7 +94,6 @@ def score_candidate_task(candidate_id: int, job_id: int):
 
         overall = (text_score * 0.6) + (skills_score * 0.4)
 
-        # get recommendation from qwen
         recommendation = recommender_service.generate(
             candidate_id=candidate_id,
             job_id=job_id,
@@ -123,30 +101,14 @@ def score_candidate_task(candidate_id: int, job_id: int):
             db=db
         )
 
-        # search for match if it exists
-        match = db.query(MatchResult).filter(
-            MatchResult.candidate_id == candidate_id,
-            MatchResult.job_description_id == job_id 
-        ).first()
-
-        if not match:
-            match = MatchResult(
-                candidate_id = candidate_id,
-                job_description_id = job_id,
-                text_score = float(text_score),
-                skills_score = float(skills_score),
-                overall_score = float(overall),
-                recommendation = recommendation
-            )
-            db.add(match)
-            db.commit()
-        else:
-            match.text_score = float(text_score)
-            match.skills_score = float(skills_score)
-            match.overall_score = float(overall)
-            recommendation = recommendation
-            db.commit()
-
+        matchRepository.update_or_add_match(
+            candidate_id=candidate_id,
+            job_id=job_id,
+            text_score=text_score,
+            skills_score=skills_score,
+            overall=overall,
+            recommendation=recommendation
+        )
         return {"overall_score": float(overall), "recommendation": recommendation}
 
     except Exception as e:
@@ -162,7 +124,7 @@ def compute_umap():
     db = SessionLocal()
     try:
         candidates = db.query(CandidateEmbedding).all()
-        jobs = db.query(JobDescriptionEmbedding).all()
+        jobs = jobEmbeddingRepository.get_all_job_embeddings()
 
         candidate_embeddings_desc = [c.skills_embedding for c in candidates]
 
@@ -196,17 +158,17 @@ def compute_umap():
 def create_job_embedding(job_id: int):
     db = SessionLocal()
     try:
-        job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
+        job = jobRepository.get_job_by_id(job_id)
         if not job:
             raise ValueError("Job not found")
 
-        job_embedding = JobDescriptionEmbedding(
-            job_description_id=job_id,
+        jobEmbeddingRepository.add_job_embedding(
+            job_id=job_id,
             description_embedding=embedding_service.generate(job.description),
             skills_embedding=embedding_service.generate(" ".join(job.required_skills))
         )
-        db.add(job_embedding)
-        db.commit()
+
+        return {"status": "embedding created", "job_id": job_id}
     finally:
         db.close()
 
