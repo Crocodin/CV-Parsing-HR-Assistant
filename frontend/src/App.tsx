@@ -7,6 +7,9 @@ import EmbeddingAPI from './api/EmbeddingAPI';
 import CandidateAPI from './api/CandidateAPI';
 import CandidateView from './components/CandidateView';
 import type { CV } from './model/CV';
+import JobView from './components/JobView';
+import type { Job } from './model/Job';
+import JobAPI from './api/JobAPI';
 
 function App() {
   const [cvPoints, setCvPoints] = useState<CVPoint2D[]>([]);
@@ -15,6 +18,7 @@ function App() {
   const [window, setWindow] = useState<string>("home");
 
   const [candidatesShell, setCandidatesShell] = useState<CV[]> ([]);
+  const [jobsShell, setJobsShell] = useState<Job[]> ([]); 
 
   useEffect(() => {
     EmbeddingAPI.getAllPoints()
@@ -33,6 +37,13 @@ function App() {
         console.log("Fetched candidates shell data:", data);
       })
       .catch((err) => console.error('Error fetching candidates shell data:', err));
+    // fetch jobs shell data
+    JobAPI.getAllJobs()
+      .then((data) => {
+        setJobsShell(data);
+        console.log("Fetched jobs shells", jobsShell)
+      })
+      .catch((err) => console.error('Error fetching jobs shell data:', err))
   }, []);
 
   if (loadingPoints) return (
@@ -63,6 +74,10 @@ function App() {
           <h2>Welcome to Honey badgeR!</h2>
           <p>Your AI-powered HR assistant for smarter hiring decisions.</p>
         </div>
+      )}
+
+      {window === "jobs" && (
+        <JobView jobs={jobsShell} jobsUpdated={setJobsShell} />
       )}
 
       {window === "candidates" && (

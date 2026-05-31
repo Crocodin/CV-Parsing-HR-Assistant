@@ -24,7 +24,7 @@ def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     db.add(job)
     db.commit()
     db.refresh(job)
-    create_job_embedding.delay(job.id, db)
+    create_job_embedding.delay(job.id)
     return {"job_id": job.id}
 
 @router.get("/all")

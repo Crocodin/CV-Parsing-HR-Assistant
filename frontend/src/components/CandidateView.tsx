@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import CandidateAPI from "../api/CandidateAPI";
 import './CandidateView.scss';
 
-function CandidateView({cv, cvUpdated}: {cv: CV[], cvUpdated: (updatedCv: CV[]) => void}) {
+function CandidateView({cv, cvUpdated} : {cv: CV[], cvUpdated: (updatedCv: CV[]) => void}) {
   const [clickedCandidate, setClickedCandidate] = useState<CV | null>(null);
   const [candidate, setCandidate] = useState<CV | null>(null);
 
@@ -50,7 +50,7 @@ function CandidateView({cv, cvUpdated}: {cv: CV[], cvUpdated: (updatedCv: CV[]) 
 
   const handleUpload = async (file: File) => {
     console.log(window.electronAPI)
-    // 1. save file locally via Electron
+    // save file locally via Electron
     if (!window.electronAPI) {
       console.error("Electron API not available");
       return;
@@ -58,7 +58,7 @@ function CandidateView({cv, cvUpdated}: {cv: CV[], cvUpdated: (updatedCv: CV[]) 
     const fileBuffer = await file.arrayBuffer()
     const savedPath = await window.electronAPI.saveFile(file.name, fileBuffer)
 
-    // 2. upload to FastAPI with the saved path
+    // upload to FastAPI with the saved path
     CandidateAPI.uploadCV(file, savedPath)
       .then((task) => pollTaskStatus(task.task_id))
       .catch((err) => console.error(err))
@@ -66,7 +66,7 @@ function CandidateView({cv, cvUpdated}: {cv: CV[], cvUpdated: (updatedCv: CV[]) 
 
   return (
     <div className="main-container">
-      {/* the main view of candidate */}
+      {/* candidate names and upload screen */}
       <div className="left">
         <div className="upload-container">
           <h2 onClick={ () =>
@@ -85,7 +85,7 @@ function CandidateView({cv, cvUpdated}: {cv: CV[], cvUpdated: (updatedCv: CV[]) 
           </ul>
         </div>
       </div>
-      {/* candidate cv and upload section */}
+      {/* candidate cv */}
       <div className="right">
         {clickedCandidate === null && (
           <div className="upload-button-container">

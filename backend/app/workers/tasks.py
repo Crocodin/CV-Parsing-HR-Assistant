@@ -1,6 +1,4 @@
 from celery import Celery
-from sqlalchemy.orm import Session
-from fastapi import Depends
 
 from app.config.config import config
 from app.services.extractor import CVExtractor
@@ -195,15 +193,20 @@ def compute_umap():
         db.close()
 
 @celery_app.task
-def create_job_embedding(job_id: int, db: Session = Depends(get_db)):
-    job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
-    if not job:
-        raise ValueError("Job not found")
+def create_job_embedding(job_id: int):
+    db = SessionLocal()
+    try:
+        job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
+        if not job:
+            raise ValueError("Job not found")
 
-    job_embedding = JobDescriptionEmbedding(
-        job_description_id=job_id,
-        description_embedding=embedding_service.generate(job.description),
-        skills_embedding=embedding_service.generate(" ".join(job.required_skills))
-    )
-    db.add(job_embedding)
-    db.commit()
+        job_embedding = JobDescriptionEmbedding(
+            job_description_id=job_id,
+            description_embedding=embedding_service.generate(job.description),
+            skills_embedding=embedding_service.generate(" ".join(job.required_skills))
+        )
+        db.add(job_embedding)
+        db.commit()
+    finally:
+        db.close()
+
