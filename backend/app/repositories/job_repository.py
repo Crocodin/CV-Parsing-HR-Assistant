@@ -1,13 +1,11 @@
-from sqlalchemy.orm import Session
-
 from app.models.embedded_objects import JobDescriptionEmbedding
 from app.models.raw_objects import JobDescription
 from app.models.shell_objects import JobCreate
-from app.db.session import get_db
+from sqlalchemy.orm import Session
 
 class JobRepository:
-    def __init__(self):
-        self.db = get_db()
+    def __init__(self, db: Session):
+        self.db = db
 
     def add_job(self, job: JobCreate):
         try:
@@ -23,6 +21,7 @@ class JobRepository:
             self.db.commit()
             self.db.refresh(_job)
             return _job
+        
         except Exception as e:
             self.db.rollback()
             raise e
@@ -48,11 +47,12 @@ class JobRepository:
         except Exception as e:
             self.db.rollback()
             raise e
+            
 
 class JobEmbeddingRepository:
-    def __init__(self):
-        self.db = get_db()
-        
+    def __init__(self, db: Session):
+        self.db = db
+
     def add_job_embedding(self, job_id: int, description_embedding: list[float], skills_embedding: list[float]):
         try:
             job_embedding = JobDescriptionEmbedding(
@@ -81,6 +81,3 @@ class JobEmbeddingRepository:
         except Exception as e:
             self.db.rollback()
             raise e
-
-jobRepository = JobRepository()
-jobEmbeddingRepository = JobEmbeddingRepository()

@@ -1,5 +1,5 @@
 import api from "./Api";
-import type { Job } from "../model/Job";
+import type { BestJob, Job } from "../model/Job";
 
 class JobAPI {
   static async getJobById(id: number): Promise<Job> {
@@ -16,6 +16,11 @@ class JobAPI {
   static async uploadJob(job: Omit<Job, 'id'>): Promise<string> {
     const response = await api.post<{job_id: string}>('jobs/create', job);
     return response.data.job_id;
+  }
+
+  static async getBestJobsForCandidate(candidateId: number): Promise<BestJob[]> {
+    const response = await api.get<any>(`/candidate/${candidateId}/best-jobs`);
+    return response.data.jobs;
   }
 }
 

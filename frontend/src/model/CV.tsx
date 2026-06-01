@@ -47,3 +47,15 @@ export type CV = {
     date_published: string;
   }
 }
+
+export type BestCandidate = {
+  candidate_id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  summary: string;
+  overall_score: number | null;
+  text_score: number | null;
+  skills_score: number | null;
+  recommendation: string | null;
+}

@@ -1,15 +1,12 @@
-from sqlalchemy.orm import Session
-
 from app.models.embedded_objects import CandidateEmbedding
 from app.models.raw_objects import Candidate
 from app.models.shell_objects import CandidateCreate
-from app.services.splitter import clean_skills
-from app.db.session import get_db
+from sqlalchemy.orm import Session
 
 
 class CandidateRepository:
-    def __init__(self):
-        self.db = get_db()
+    def __init__(self, db: Session):
+        self.db = db
     
     def add_candidate(self, data: CandidateCreate) -> Candidate:
         try:
@@ -24,11 +21,33 @@ class CandidateRepository:
         except Exception as e:
             self.db.rollback()
             raise e
+        
+    def get_all_candidates(self):
+        try:
+            return self.db.query(Candidate).all()
+        except Exception as e:
+            self.db.rollback()
+            raise e
+        
+    def get_candidate_by_id(self, candidate_id: int):
+        try:
+            return self.db.query(Candidate).filter(Candidate.id == candidate_id).first()
+        except Exception as e:
+            self.db.rollback()
+            raise e
+        
+    def get_all_candidates_shell(self):
+        try:
+            candidates = self.db.query(Candidate.id, Candidate.name).all()
+            return [{"id": c[0], "name": c[1]} for c in candidates]
+        except Exception as e:
+            self.db.rollback()
+            raise e
 
 
 class CandidateEmbeddingRepository:
-    def __init__(self):
-        self.db = get_db()
+    def __init__(self, db: Session):
+        self.db = db
 
     def add_candidate_embedding(self, candidate_id: int, description_embedding: list[float], skills_embedding: list[float]):
         try:
@@ -49,6 +68,3 @@ class CandidateEmbeddingRepository:
         except Exception as e:
             self.db.rollback()
             raise e
-
-candidateRepository = CandidateRepository()
-candidateEmbeddingRepository = CandidateEmbeddingRepository()

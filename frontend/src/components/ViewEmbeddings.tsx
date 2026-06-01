@@ -31,6 +31,9 @@ function ViewEmbeddings({jobData, cvData} : {jobData : JobPoint2D[], cvData: CVP
   const [closestJob, setClosestJob] = useState<Job | null>(null);
   const [furthestJob, setFurthestJob] = useState<Job | null>(null);
 
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [loadingJob, setLoadingJob] = useState(false);
+
   useEffect(() => {
     if (selectedPoint && selectedPoint.type === 'cv') {
       setLoadingCV(true);
@@ -42,6 +45,8 @@ function ViewEmbeddings({jobData, cvData} : {jobData : JobPoint2D[], cvData: CVP
         })
         .finally(() => {
           setLoadingCV(false);
+          setSelectedJob(null);
+          setSelectedJob(null);
         });
 
       // now, for all the job points, we want to calculate the distance to the selected CV point and log it
@@ -67,6 +72,22 @@ function ViewEmbeddings({jobData, cvData} : {jobData : JobPoint2D[], cvData: CVP
         .catch((error) => {
           console.error('Error fetching furthest job details:', error);
         });
+    } if (selectedPoint && selectedPoint.type === 'job') {
+        setLoadingJob(true);
+        setSelectedJob(null);
+        JobAPI.getJobById(selectedPoint.id)
+          .then((job) => setSelectedJob(job))
+          .catch((error) => {
+            console.error('Error fetching job details:', error);
+          })
+          .finally(() => {
+            setLoadingJob(false);
+            setSelectedCV(null);
+            setClosestJobPoint(null);
+            setFurthestJobPoint(null);
+            setClosestJob(null);
+            setFurthestJob(null);
+          });
     } else {
       setSelectedCV(null);
       setClosestJobPoint(null);
@@ -113,7 +134,22 @@ function ViewEmbeddings({jobData, cvData} : {jobData : JobPoint2D[], cvData: CVP
               View CV
             </button>
           </div>
-        ) : null}
+        ) : null }
+        { loadingJob ? (
+          <p>Loading job details...</p>
+        ) : selectedJob ? (
+          <div className="job-details">
+            <h3>{selectedJob.title}</h3>
+            
+            <ul className="skills">
+              {selectedJob.required_skills.map((skill, index) => (
+                <li className="skill rounded-sm" key={index}>{skill}</li>
+              ))}
+            </ul>
+
+            <p>{selectedJob.description}</p>
+          </div>
+        ) : null }
       </div>
       <EmbeddingCanvas data={[...jobData, ...cvData]} setSelectedPoint={setSelectedPoint} />
     </div>

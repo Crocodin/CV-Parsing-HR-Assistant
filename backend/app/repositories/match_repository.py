@@ -1,10 +1,9 @@
 from sqlalchemy.orm import Session
 from app.models.raw_objects import MatchResult
-from app.db.session import get_db
 
 class MatchRepository:
-    def __init__(self):
-        self.db = get_db()
+    def __init__(self, db: Session):
+        self.db = db
 
     def update_or_add_match(self, candidate_id: int, job_id: int, text_score: float, skills_score: float, overall: float, recommendation: str):
         try:
@@ -32,5 +31,3 @@ class MatchRepository:
         except Exception as e:
             self.db.rollback()
             raise e
-            
-matchRepository = MatchRepository()

@@ -1,4 +1,4 @@
-import type { CV } from "../model/CV";
+import type { BestCandidate, CV } from "../model/CV";
 import type { Task } from "../model/Task";
 import api from "./Api";
 
@@ -13,10 +13,11 @@ class CandidateAPI {
     return response.data;
   }
 
-  static async uploadCV(file: File, cv_file_path: string): Promise<Task> {
+  static async uploadCV(file: File): Promise<Task> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('cv_file_path', cv_file_path);
+
+    formData.append("file", file);
 
     const response = await api.post('/candidate/upload-cv', formData, {
       headers: {
@@ -29,6 +30,11 @@ class CandidateAPI {
   static async getTaskStatus(taskId: string): Promise<Task> {
     const response = await api.get(`/candidate/status/${taskId}`);
     return response.data;
+  }
+
+  static async getBestCandidatesForJob(jobId: number): Promise<BestCandidate[]> {
+    const response = await api.get<any>(`/jobs/${jobId}/best-candidates`);
+    return response.data.candidates;
   }
 }
 
