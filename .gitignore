@@ -32,3 +32,6 @@ dist-ssr
 
 dist-electron
 cspell.json
+
+.prettierignore
+.prettierrc

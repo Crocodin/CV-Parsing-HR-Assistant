@@ -9,8 +9,8 @@ router = APIRouter()
 
 @router.get("/compute")
 def compute_points():
-    task = compute_umap.delay()
-    return {"status": "processing", "task_id": task.id}
+    compute_umap()
+    return { "status": "ok" }
 
 @router.get("/status/{task_id}")
 def umap_status(task_id: str):
@@ -24,6 +24,8 @@ def umap_status(task_id: str):
 
 @router.get("/points")
 def get_all_umap_points(db: Session = Depends(get_db)):
+    compute_umap()  # trigger the computation of points if not already done
+
     candidate_points = db.query(CandidateEmbedding.candidate_id, CandidateEmbedding.point_2D)\
         .filter(CandidateEmbedding.point_2D != None).all()
     job_points = db.query(JobDescriptionEmbedding.job_description_id, JobDescriptionEmbedding.point_2D)\

@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import type { Job } from "../model/Job";
 import JobAPI from "../api/JobAPI";
 import './JobView.scss'
+import type { BestCandidate } from "../model/CV";
+import CandidateAPI from "../api/CandidateAPI";
 
 function JobView({jobs, jobsUpdated} : {jobs: Job[], jobsUpdated: (updatedJob: Job[]) => void}) {
   const [clickedJob, setClickedJob] = useState<Job | null>(null);
   const [fullJob, setFullJob] = useState<Job | null>(null);
+  const [bestCandidates, setBestCandidates] = useState<BestCandidate[]>([]);
 
   useEffect(() => {
     if (!clickedJob) return;
@@ -16,6 +19,16 @@ function JobView({jobs, jobsUpdated} : {jobs: Job[], jobsUpdated: (updatedJob: J
     };
 
     fetchFullJob();
+  }, [clickedJob]);
+
+  useEffect(() => {
+    if (!clickedJob) return;
+    const fetchBestCandidates = async () => {
+      const data = await CandidateAPI.getBestCandidatesForJob(clickedJob.id);
+      setBestCandidates(data);
+    };
+
+    fetchBestCandidates();
   }, [clickedJob]);
 
   const [jobFormData, setJobFormData] = useState<Omit<Job, 'id'>>({
@@ -90,6 +103,17 @@ function JobView({jobs, jobsUpdated} : {jobs: Job[], jobsUpdated: (updatedJob: J
             <div className="description">
               {fullJob?.description ? fullJob.description : "Description not available"}
             </div>
+            <h2>Best Candidates</h2>
+            <ul className="best-candidates">
+              {bestCandidates.map((candidate) => (
+                <li key={candidate.candidate_id} className="candidate-card">
+                  <h3>{candidate.name ? candidate.name : "Name not available"}</h3>
+                  <p>{candidate.email ? candidate.email : "Email not available"} | {candidate.phone ? candidate.phone : "Phone not available"}</p>
+                  <p>Overall Score: {candidate.overall_score !== null ? candidate.overall_score.toFixed(2) : "N/A"}</p>
+                  <p>Recommendation: {candidate.recommendation ? candidate.recommendation : "No recommendation available"}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

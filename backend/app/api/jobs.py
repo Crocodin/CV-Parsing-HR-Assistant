@@ -1,54 +1,58 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from app.db.session import get_db
-from app.models.raw_objects import JobDescription
 from app.models.shell_objects import JobCreate
 from app.workers.tasks import create_job_embedding
+from app.repositories.job_repository import JobRepository, JobEmbeddingRepository
+from app.repositories.best import get_best_candidates_for_job
+from app.db.session import get_db
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
-
 @router.post("/create")
 def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
-    job = JobDescription(
-        title=job_data.title,
-        description=job_data.description,
-        required_skills=job_data.required_skills,
-        min_years_experience=job_data.min_years_experience,
-        location=job_data.location,
-        job_type=job_data.job_type
-    )
-
-    db.add(job)
-    db.commit()
-    db.refresh(job)
+    repo = JobRepository(db)
+    job = repo.add_job(job_data)
     create_job_embedding.delay(job.id)
     return {"job_id": job.id}
 
 @router.get("/all")
 def get_all_jobs(db: Session = Depends(get_db)):
-    jobs = db.query(JobDescription).all()
-    return jobs
-
-class JobShell(BaseModel):
+    repo = JobRepository(db)
+    return repo.get_all_jobs()
+    
+class __JobShell__(BaseModel):
     id: int
     title: str
 
-@router.get("/all/shell", response_model=list[JobShell])
-def get_all_jobs(db: Session = Depends(get_db)):
-    jobs = db.query(JobDescription.id, JobDescription.title).all()
-    return [{"id": j[0], "title": j[1]} for j in jobs]
+@router.get("/all/shell", response_model=list[__JobShell__])
+def get_all_jobs_shell(db: Session = Depends(get_db)):
+    repo = JobRepository(db)
+    return repo.get_all_jobs_shell()
+
+
+@router.post("/{job_id}/trigger")
+def trigger_job_embedding(job_id: int):
+    create_job_embedding.delay(job_id)
+    return {"status": "ok"}
+
+@router.get("/{job_id}/best-candidates")
+def get_best_candidates(job_id: int, limit: int = 5, db: Session = Depends(get_db)):
+    """
+    Get the best N candidates for a job based on match scores.
+    """
+    repo = JobRepository(db)
+    job = repo.get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    best_candidates = get_best_candidates_for_job(job_id, db, limit)
+    if not best_candidates:
+        raise HTTPException(status_code=404, detail="No matching candidates found. Scoring may not be complete.")
+    return {"candidates": best_candidates}
 
 @router.get("/{job_id}")
 def get_job(job_id: int, db: Session = Depends(get_db)):
-    job = db.query(JobDescription).filter(JobDescription.id == job_id).first()
-    if not job:
-        raise ValueError("Job not found")
-    return job
-
-@router.post("/{job_id}/trigger")
-def trigger_job_embedding(job_id: int, db: Session = Depends(get_db)):
-    create_job_embedding.delay(job_id, db)
-    return {"status": "ok"}
+    repo = JobRepository(db)
+    return repo.get_job_by_id(job_id)

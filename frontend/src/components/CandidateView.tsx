@@ -1,11 +1,14 @@
 import type { CV } from "../model/CV";
+import type { BestJob } from "../model/Job";
 import { useState, useEffect } from "react";
 import CandidateAPI from "../api/CandidateAPI";
 import './CandidateView.scss';
+import JobAPI from "../api/JobAPI";
 
 function CandidateView({cv, cvUpdated} : {cv: CV[], cvUpdated: (updatedCv: CV[]) => void}) {
   const [clickedCandidate, setClickedCandidate] = useState<CV | null>(null);
   const [candidate, setCandidate] = useState<CV | null>(null);
+  const [bestJobs, setBestJobs] = useState<BestJob[]>([]);
 
   useEffect(() => {
     if (clickedCandidate) {
@@ -22,6 +25,16 @@ function CandidateView({cv, cvUpdated} : {cv: CV[], cvUpdated: (updatedCv: CV[])
     }
   }, [clickedCandidate]);
 
+  useEffect(() => {
+    if (!clickedCandidate) return;
+    const fetchBestJobs = async () => {
+      const data = await JobAPI.getBestJobsForCandidate(clickedCandidate.id);
+      setBestJobs(data);
+    };
+
+    fetchBestJobs();
+  }, [clickedCandidate]);
+
   const pollTaskStatus = (taskId: string) => {
     const intervalId = setInterval(() => {
       CandidateAPI.getTaskStatus(taskId)
@@ -33,7 +46,7 @@ function CandidateView({cv, cvUpdated} : {cv: CV[], cvUpdated: (updatedCv: CV[])
             CandidateAPI.getAllCandidates()
               .then((data) => {
                 cvUpdated(data);
-                console.log("Refetched candidates shell data:", data);
+                console.log("Re-fetched candidates shell data:", data);
               })
               .catch((err) => console.error('Error refetching candidates shell data:', err));
           } else if (task.status === "FAILED") {
@@ -49,17 +62,8 @@ function CandidateView({cv, cvUpdated} : {cv: CV[], cvUpdated: (updatedCv: CV[])
   }
 
   const handleUpload = async (file: File) => {
-    console.log(window.electronAPI)
-    // save file locally via Electron
-    if (!window.electronAPI) {
-      console.error("Electron API not available");
-      return;
-    }
-    const fileBuffer = await file.arrayBuffer()
-    const savedPath = await window.electronAPI.saveFile(file.name, fileBuffer)
-
     // upload to FastAPI with the saved path
-    CandidateAPI.uploadCV(file, savedPath)
+    CandidateAPI.uploadCV(file)
       .then((task) => pollTaskStatus(task.task_id))
       .catch((err) => console.error(err))
   }
@@ -114,19 +118,19 @@ function CandidateView({cv, cvUpdated} : {cv: CV[], cvUpdated: (updatedCv: CV[])
             <div className="summary">
               {candidate.summary ? candidate.summary : "Summary not available"}
             </div>
-            {candidate.cv_file_path ? (
-              <iframe
-                className="candidate-cv"
-                src={candidate.cv_file_path}
-                width="100%"
-                height="100%"
-                title="Candidate CV"
-              />
-            ) : (
-              <div>
-                <p>No CV available</p>
-              </div>
-            )}
+            <div className="best-jobs">
+              <h2>Best Job Matches</h2>
+              <ul className="jobs">
+                {bestJobs.map((job) => (
+                  <li key={job.job_id} className="job-card">
+                    <h3>{job.title ? job.title : "Title not available"}</h3>
+                    <p>{job.location ? job.location : "Location not available"} | {job.job_type ? job.job_type : "Job type not available"}</p>
+                    <p>Overall Score: {job.overall_score !== null ? job.overall_score.toFixed(2) : "N/A"}</p>
+                    <p>Recommendation: {job.recommendation ? job.recommendation : "No recommendation available"}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
       </div>
