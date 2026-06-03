@@ -11,6 +11,7 @@ class OllamaService:
         self.url = config.OLLAMA_URL
         self.client = ollama.Client(self.url)
         self.model = config.OLLAMA_LLM_MODEL
+        # temperature, top_k, top_p etc. — configured via .env to keep the output focused and consistent
         self.llm_params = config.OLLAMA_LLM_PARAMS
 
     def generate_response(self, prompt: str) -> str:
@@ -52,6 +53,8 @@ class OllamaService:
             return {"error": "Invalid JSON response from Ollama."}
         
     def generate_json_for_cv(self, content: str) -> dict:
+        # system prompt sets the output format rules; content is the raw extracted CV text
+        # the model is expected to return valid JSON — no extra text, no markdown
         try:
             response = self.client.generate(model=self.model, system=OLLAMA_PROMPT, prompt=content, options=self.llm_params)
 

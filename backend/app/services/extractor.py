@@ -3,12 +3,14 @@ import docx2txt
 from io import BytesIO
 
 # the CVExtractor class has aditional methods to extract via path in case we will need it later, but the main method is extract_text which will determine the file type and extract accordingly.
+# _from_path variants exist for local testing; the main pipeline uses bytes (file uploaded via API).
 class CVExtractor:
     @staticmethod
     def extract_pdf(file_bytes: bytes) -> str:
         with pdfplumber.open(BytesIO(file_bytes)) as pdf:
             text = ''
             for page in pdf.pages:
+                # extract_text() can return None if the page has no text layer (scanned PDF)
                 text += page.extract_text()
         return text
     
@@ -40,6 +42,7 @@ class CVExtractor:
 
     @staticmethod
     def extract_text(file_bytes: bytes) -> str:
+        # detect file type from magic bytes, then dispatch to the correct extractor
         file_type = CVExtractor.what_is_file_type(file_bytes)
         if file_type == 'pdf':
             return CVExtractor.extract_pdf(file_bytes)
