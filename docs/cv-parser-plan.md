@@ -40,17 +40,12 @@ cv-parser/
 │           └── migrations/         <- Alembic migration files
 │
 ├── frontend/                       
-│   └── (Flutter project)
-│       ├── lib/
-│       │   ├── main.dart
+│   └── (React project)
+│       ├── src/
 │       │   ├── screens/
-│       │   │   ├── dashboard_screen.dart
-│       │   │   ├── upload_screen.dart
-│       │   │   └── candidate_screen.dart
-│       │   ├── widgets/
+│       │   ├── components/
 │       │   └── services/
-│       │       └── api_service.dart 
-│       └── pubspec.yaml
+│       └── package.json
 │
 └── docs/
     ├── cv-parser-architecture.md

@@ -22,8 +22,8 @@ Create `backend/app/db/password.txt` and write just the password.
 
 **5. Install Ollama and pull the models** <br>
 ```bash
-ollama pull qwen3.5:4b -- or qwen2.5:3b
-ollama pull nomic-embed-text-v2-moe
+ollama pull granite4.1:3b
+ollama pull embeddinggemma:300m
 ```
 
 **6. Install Docker Desktop** <br>
