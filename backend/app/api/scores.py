@@ -8,11 +8,13 @@ from app.workers.tasks import score_candidate_task
 
 router = APIRouter()
 
+#it triggers scoring to happen for a certain candidate and job
 @router.post("/{candidate_id}/{job_id}/trigger")
 def trigger_scoring(candidate_id: int, job_id: int):
     task = score_candidate_task.delay(candidate_id, job_id)
     return {"task_id": task.id, "status": "processing"}
 
+#returns the status of a score by it's id
 @router.get("/status/{task_id}")
 def score_status(task_id: str):
     task = AsyncResult(task_id)
@@ -21,6 +23,7 @@ def score_status(task_id: str):
         "status": task.status,
     }
 
+#returns the score of a candidate relative to a job, if it does not exist, it throws an error
 @router.get("/{candidate_id}/{job_id}")
 def get_score(candidate_id: int, job_id: int, db: Session = Depends(get_db)):
     score = db.query(MatchResult).filter(

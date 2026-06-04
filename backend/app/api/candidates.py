@@ -11,7 +11,7 @@ from app.db.session import get_db
 from sqlalchemy.orm import Session
 
 route = APIRouter()
-
+#returns all the candidates
 @route.get("/all")
 async def get_all_candidates(db: Session = Depends(get_db)):
     repo = CandidateRepository(db)
@@ -22,12 +22,13 @@ class CandidateShell(BaseModel):
     id: int
     name: str
 
+#gets all the candidates from the shell
 @route.get("/all/shell", response_model=list[CandidateShell])
 async def get_all_candidates_shell(db: Session = Depends(get_db)):
     repo = CandidateRepository(db)
     return repo.get_all_candidates_shell()
 
-
+#extracts the text
 @route.post("/extract-text")
 async def extract_text(file: UploadFile):
     file_bytes = await file.read()
@@ -37,7 +38,7 @@ async def extract_text(file: UploadFile):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
+#gets a candidate by it's id
 @route.get("/{candidate_id}")
 async def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
     repo = CandidateRepository(db)
@@ -46,7 +47,7 @@ async def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Candidate not found")
     return candidate
     
-
+#uploades a cv and then returns it's status and task id or an error if it fails
 @route.post("/upload-cv")
 async def upload_cv(file: UploadFile):
     file_bytes = await file.read()
@@ -60,6 +61,7 @@ async def upload_cv(file: UploadFile):
         raise HTTPException(status_code=400, detail=str(e))
     
 
+#return a cv's status 
 @route.get("/status/{task_id}")
 async def cv_status(task_id: str):
     task = AsyncResult(task_id)
