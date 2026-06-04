@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 router = APIRouter()
 
+#creates a job and returns it's id
 @router.post("/create")
 def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     repo = JobRepository(db)
@@ -17,6 +18,7 @@ def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     create_job_embedding.delay(job.id)
     return {"job_id": job.id}
 
+#return all the jobs
 @router.get("/all")
 def get_all_jobs(db: Session = Depends(get_db)):
     repo = JobRepository(db)
@@ -25,6 +27,7 @@ def get_all_jobs(db: Session = Depends(get_db)):
 class __JobShell__(BaseModel):
     id: int
     title: str
+
 
 @router.get("/all/shell", response_model=list[__JobShell__])
 def get_all_jobs_shell(db: Session = Depends(get_db)):
@@ -37,6 +40,7 @@ def trigger_job_embedding(job_id: int):
     create_job_embedding.delay(job_id)
     return {"status": "ok"}
 
+#returns the best candidates for a job, where limit is the uppter limit of candidates that will be returned
 @router.get("/{job_id}/best-candidates")
 def get_best_candidates(job_id: int, limit: int = 5, db: Session = Depends(get_db)):
     """
@@ -52,6 +56,7 @@ def get_best_candidates(job_id: int, limit: int = 5, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="No matching candidates found. Scoring may not be complete.")
     return {"candidates": best_candidates}
 
+#retruen a job by it's id
 @router.get("/{job_id}")
 def get_job(job_id: int, db: Session = Depends(get_db)):
     repo = JobRepository(db)

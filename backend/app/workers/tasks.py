@@ -22,6 +22,7 @@ from app.services.umap_points import compute_umap_points
 celery_app = Celery('tasks', broker=config.REDIS_URL, backend=config.REDIS_URL)
 celery_app.conf.task_track_started = True
 
+#it gets the bys of a file as input then it procceses the CV from that file, and adding a new candidate to the db.It generates the embedings for the candidate after it return the id of said candidate
 @celery_app.task
 def process_cv(file_bytes: bytes):
     db = SessionLocal()
@@ -78,7 +79,7 @@ def process_cv(file_bytes: bytes):
     finally:
         db.close()
 
-
+#this returns the score of a certain candidate for a certain job as well as a recomandation from the ai agent
 @celery_app.task
 def score_candidate_task(candidate_id: int, job_id: int):
     db = SessionLocal()
