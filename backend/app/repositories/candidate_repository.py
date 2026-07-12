@@ -29,7 +29,7 @@ class CandidateRepository:
             self.db.rollback()
             raise e
         
-    def get_candidate_by_id(self, candidate_id: int):
+    def get_candidate_by_id(self, candidate_id: int) -> Candidate:
         try:
             return self.db.query(Candidate).filter(Candidate.id == candidate_id).first()
         except Exception as e:
@@ -68,3 +68,4 @@ class CandidateEmbeddingRepository:
         except Exception as e:
             self.db.rollback()
             raise e
+        

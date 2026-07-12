@@ -6,25 +6,22 @@ An AI-powered desktop application (HoneyBadgeR) that helps HR personnel screen C
 It parses CVs, extracts structured data, compares candidates against job descriptions, generates  
 match scores, and provides explainable recommendations. The system supports human decision-making, it does not automate hiring decisions.
 
-Team size: 3 students.
-
 ---
 
 ## Full Tech Stack
 
-| Layer                           | Technology                           | Optional |
-|---------------------------------|--------------------------------------|----------|
-| Desktop Frontend                | React (TypeScript)                   | No.      |
-| Backend API                     | FastAPI (Python)                     | No.      |
-| Database                        | PostgreSQL + pgvector                | No.      |
-| Migrations                      | Alembic                              | Yes      |
-| Job Queue                       | Redis + Celery                       | Yes      |
-| LLM (parsing + recommendations) | Ollama — granite4.1:3b               | No.      |
-| Embeddings (scoring)            | Ollama — embeddinggemma:300m         | No.      |
-| PDF extraction                  | pdfplumber                           | No.      |
-| DOCX extraction                 | python-docx                          | No.      |
-| Auth                            | JWT                                  | Yes      |
-| Containerization                | Docker Compose (partial — see below) | No.      |
+| Layer                           | Technology                           | 
+|---------------------------------|--------------------------------------|
+| Desktop Frontend                | React (Electron)                     |
+| Backend API                     | FastAPI (Python)                     | 
+| Database                        | PostgreSQL                           |
+| Migrations                      | Alembic                              | 
+| Job Queue                       | Celery                               | 
+| LLM (parsing + recommendations) | Ollama — granite:4.1                 | 
+| Embeddings (scoring)            | Ollama — embeddinggemma              | 
+| PDF extraction                  | pdfplumber                           | 
+| DOCX extraction                 | python-docx                          | 
+| Containerization                | Docker Compose                       |
 
 
 > **Note:** Initial architecture planned for `qwen3.5:4b` and `nomic-embed-text-v2-moe`.
@@ -36,23 +33,15 @@ Team size: 3 students.
 ## What Runs Where
 
 ```
-Your Machine (native)
-├── Ollama                  -> serves granite4.1:3b and embeddinggemma:300m
+Native
+├── Ollama                  
 │     └── accessible at localhost:11434
-└── React frontend          -> talks to FastAPI via HTTP
+└── React desktop app     -> talks to FastAPI via HTTP
 
 Docker Compose
-├── FastAPI                 -> talks to Ollama at host.docker.internal:11434
-├── PostgreSQL              -> data persistence via Docker volume
-├── Redis                   -> job queue for Celery
-├── Celery worker           -> processes CV parsing jobs
-└── pgAdmin                 -> database GUI at localhost:5050
+├── FastAPI                 
+└── PostgreSQL              
 ```
-
-React and Ollama run natively on the machine. FastAPI, PostgreSQL, Redis, Celery, and pgAdmin
-run inside Docker. No GPU passthrough needed — Ollama has direct access to the GPU as a native process.
-
----
 
 ## CV Processing Pipeline
 
@@ -60,11 +49,11 @@ run inside Docker. No GPU passthrough needed — Ollama has direct access to the
 User uploads PDF or DOCX
 ↓
 pdfplumber / python-docx        -> raw text extraction
-↓
-Celery queue                    -> jobs processed one at a time, Ollama not hammered
-↓
-granite4.1:3b via Ollama        -> one prompt → structured JSON from full CV text
-↓
+        ↓
+Celery queue                    
+        ↓
+Granite:4.1 via Ollama          -> parse CV into structured JSON per section
+        ↓
 Assemble final candidate JSON
 { name, email, skills[], experience[], education[] }
 ↓
@@ -84,36 +73,28 @@ PostgreSQL                      -> save candidate + parsed data                 
 ```
 Candidate JSON + Job Description JSON
         ↓
-embeddinggemma:300m             -> convert both to embedding vectors
+embeddinggemma                 -> convert both to embedding vectors
         ↓                       (the job description embendings will be cached)
 Cosine similarity               -> match score 0–100%
         ↓
 PostgreSQL                      -> save score
         ↓
-If score > threshold (e.g. 50%)
-        ↓
-granite4.1:3b via Ollama        -> generate explanation + recommendations
+Granite:4.1 via Ollama           -> generate explanation + recommendations
 "Candidate matches 78% — strong Python skills, missing Docker.
  Suggested interview question: ..."
         ↓
 PostgreSQL                      -> save recommendation text
 ```
 
-The LLM is only called for explanation on promising candidates, not every CV.
-Embeddings handle the fast, automatic scoring pass.
-
----
-
 ## What Gets Stored in PostgreSQL
 
 | Table           | Purpose                                      |
 |-----------------|----------------------------------------------|
-| users           | HR user accounts (JWT auth)                  |
 | job_postings    | Job descriptions uploaded by HR              |
 | candidates      | Parsed CV data (structured JSON)             |
-| cv_embeddings   | nomic embedding vectors (reused across jobs) |
+| cv_embeddings   |                                              |
 | match_scores    | Score between a candidate and a job posting  |
-| recommendations | LLM explanation text per match               |
+| recommendations | Granite:4.1 explanation text per match       |
 
 Rule: anything expensive to compute gets stored so it is never recomputed.
 
@@ -128,23 +109,11 @@ Rule: anything expensive to compute gets stored so it is never recomputed.
 - **pgvector** — PostgreSQL extension for storing and querying embedding vectors natively
 ---
 
-## What the HR Dashboard Shows (HoneyBadgeR)
+## What the HR Dashboard Shows
 
-The app has three views, switchable from the top navigation:
-
-- **Candidates** — list of parsed CVs, click to see extracted skills, experience, education,
-  match score, and AI-generated recommendation
-- **Jobs** — list of uploaded job descriptions, upload new ones
-- **Map** — UMAP visualization of all candidates and jobs as points in embedding space;
-  proximity on the map reflects semantic similarity between a CV and a job description
-
----
-
-## Models
-
-| Model               | Size   | Role                                      |
-|---------------------|--------|-------------------------------------------|
-| granite4.1:3b       | ~2GB   | CV parsing + recommendation generation    |
-| embeddinggemma:300m | ~300MB | Semantic embedding for match scoring      |
-
-Both run via Ollama locally. Never loaded simultaneously — Ollama swaps them as needed.
+- Upload a job description
+- Upload CVs
+- Click a candidate to see extracted skills, experience, education
+- Read the AI-generated explanation and recommendations
+- View metrics: total screened, average score, top candidates
+- Map of candidate based on embeddings (UMAP projection) to visualize clusters of similar candidates

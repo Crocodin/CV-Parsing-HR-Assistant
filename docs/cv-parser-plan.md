@@ -3,56 +3,81 @@
 ## Folder Structure
 
 ```
-cv-parser/
-│
-├── docker-compose.yml
-│
-├── backend/                        
-│   ├── `.venv`                     <- YOU NEED TO CREATE THE VENV, DO NOT COMMIT IT
-│   ├── Dockerfile                  <- recipe for the FastAPI container
-│   ├── requirements.txt
-│   ├── `.env`                      <- YOU NEED TO CREATE THIS FILE, DO NOT COMMIT IT
-│   └── app/
-│       ├── main.py                 <- FastAPI app entry point
-│       ├── config.py               <- env
-│       │
-│       ├── api/     
-│       │   ├── jobs.py             <- upload/manage job postings
-│       │   ├── candidates.py       <- upload CVs, view parsed results
-│       │   └── scores.py           <- match scores, recommendations
-│       │
-│       ├── services/ 
-│       │   ├── extractor.py        <- pdfplumber + python-docx
-│       │   ├── splitter.py         <- `DEPRECATED` section splitter (regex)
-│       │   ├── merger.py           <- `DEPRECATED` section merger (combines JSON files)
-│       │   ├── ollama.py           <- qwen3.5:4b calls
-│       │   ├── embeddings.py       <- nomic-embed-text
-│       │   └── scorer.py
-│       │
-│       ├── models/                 
-│       │
-│       ├── workers/
-│       │   └── tasks.py            <- Celery + Redis
-│       │
-│       └── db/    
-│           ├── `password.txt`      <- YOU NEED TO CREATE THIS FILE WITH THE DB PASSWORD, DO NOT COMMIT IT
-│           ├── session.py          <- PostgreSQL connection
-│           └── migrations/         <- Alembic migration files
-│
-├── frontend/                       
-│   └── (React project)
-│       ├── src/
-│       │   ├── screens/
-│       │   ├── components/
-│       │   └── services/
-│       └── package.json
-│
-└── docs/
-    ├── cv-parser-architecture.md
-    └── cv-parser-plan.md            <- this file
-```
+CV-Parsing-HR-Assistant
+├─ .dockerignore
+├─ backend/
+│  ├─ alembic.ini
+│  ├─ app/
+│  │  ├─ api/                   <-- API endpoints for FastAPI
+│  │  │  ├─ candidates.py
+│  │  │  ├─ jobs.py
+│  │  │  ├─ points_2d.py
+│  │  │  └─ scores.py
+│  │  ├─ config/
+│  │  │  └─ config.py           <-- FastAPI configuration, only for native development, not for Docker
+│  │  ├─ db/
+│  │  │  ├─ migrations          <-- Alembic migrations folder
+│  │  │  │  └─ versions/
+│  │  │  ├─ session.py
+│  │  │  └─ tables.sql
+│  │  ├─ main.py
+│  │  ├─ models/                <-- SQLAlchemy models for database tables
+│  │  ├─ repositories/
+│  │  ├─ services/
+│  │  │  ├─ embeddings.py       <-- Embedding generation
+│  │  │  ├─ extractor.py
+│  │  │  ├─ merger.py
+│  │  │  ├─ ollama.py           <-- Ollama API calls for parsing
+│  │  │  ├─ ollama_prompts.py   <-- Ollama prompt templates
+│  │  │  ├─ recommender.py      <-- Recommendation generation
+│  │  │  ├─ scorer.py    
+│  │  │  ├─ splitter.py
+│  │  │  └─ umap_points.py      <-- UMAP calls for dimensionality reduction
+│  │  └─ workers/
+│  ├─ Dockerfile
+│  ├─ requirements.txt
+├─ docker-compose.yml
+├─ docs/
+│  ├─ cv-parser-architecture.md
+│  ├─ cv-parser-plan.md         <-- YOU ARE HERE
+│  └─ how-to-code.md
+├─ frontend/
+│  ├─ electron/
+│  │  ├─ main.ts
+│  │  └─ preload.ts
+│  ├─ index.html
+│  ├─ src/
+│  │  ├─ api/                   <-- API calls to FastAPI backend>
+│  │  │  ├─ Api.tsx
+│  │  │  ├─ CandidateAPI.tsx
+│  │  │  ├─ EmbeddingAPI.tsx
+│  │  │  └─ JobAPI.tsx
+│  │  ├─ App.scss
+│  │  ├─ App.tsx
+│  │  ├─ components/
+│  │  │  ├─ CandidateView.scss
+│  │  │  ├─ CandidateView.tsx
+│  │  │  ├─ EmbeddingCanvas.scss
+│  │  │  ├─ EmbeddingCanvas.tsx
+│  │  │  ├─ JobView.scss
+│  │  │  ├─ JobView.tsx
+│  │  │  ├─ ViewEmbeddings.scss
+│  │  │  └─ ViewEmbeddings.tsx
+│  │  ├─ index.scss
+│  │  ├─ main.tsx
+│  │  ├─ model
+│  │  │  ├─ CV.tsx
+│  │  │  ├─ CVPoint2D.tsx
+│  │  │  ├─ Job.tsx
+│  │  │  ├─ JobPoint2D.tsx
+│  │  │  └─ Task.tsx
+│  │  ├─ types
+│  │  │  └─ electron.d.ts
+│  │  └─ utils
+│  │     └─ saveCV.tsx
+└─ send_files.sh
 
----
+```
 
 ## Build Order
 
@@ -65,16 +90,9 @@ Phase 1 — Foundation
 Phase 2 — Core Pipeline
 ├── extractor.py -> splitter.py -> ollama.py
 ├── Celery + Redis queue
-└── database models → embeddings.py → scorer.py                 <=== WE ARE HERE NOW
+└── database models → embeddings.py → scorer.py                 
 
 Phase 3 — API Endpoints
-├── POST /jobs              -> upload job description
-├── POST /candidates        -> upload CV, trigger processing queue
-├── GET  /candidates        -> list all candidates with scores
-└── GET  /candidates/{id}   -> single candidate detail + recommendation
 
-Frontend
-├── Upload screen           -> calls POST /jobs and POST /candidates
-├── Dashboard screen        -> calls GET /candidates
-└── Candidate screen        -> calls GET /candidates/{id}
+Phase 4 - Frontend
 ```
