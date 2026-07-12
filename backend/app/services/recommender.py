@@ -3,6 +3,7 @@ from app.models.raw_objects import Candidate, JobDescription
 from app.services.ollama import ollama_service
 
 class RecommenderService:
+    #This calls upon ollama to generate a score for a certain candidate and a certain job
     def generate(self, candidate_id: int, job_id: int, overall_score: float, db: Session) -> str:
         candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
         job = db.query(JobDescription).filter(JobDescription.id == job_id).first()

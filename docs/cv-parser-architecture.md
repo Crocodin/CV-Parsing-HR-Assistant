@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-An AI-powered desktop application that helps HR personnel screen CVs faster and with less bias.
+An AI-powered desktop application (HoneyBadgeR) that helps HR personnel screen CVs faster and with less bias.
 It parses CVs, extracts structured data, compares candidates against job descriptions, generates  
 match scores, and provides explainable recommendations. The system supports human decision-making, it does not automate hiring decisions.
 
@@ -23,6 +23,11 @@ match scores, and provides explainable recommendations. The system supports huma
 | DOCX extraction                 | python-docx                          | 
 | Containerization                | Docker Compose                       |
 
+
+> **Note:** Initial architecture planned for `qwen3.5:4b` and `nomic-embed-text-v2-moe`.
+> During development we switched to `granite4.1:3b` (LLM) and `embeddinggemma:300m` (embeddings)
+> for better performance on available hardware.
+
 ---
 
 ## What Runs Where
@@ -42,7 +47,7 @@ Docker Compose
 
 ```
 User uploads PDF or DOCX
-        ↓
+↓
 pdfplumber / python-docx        -> raw text extraction
         ↓
 Celery queue                    
@@ -51,9 +56,15 @@ Granite:4.1 via Ollama          -> parse CV into structured JSON per section
         ↓
 Assemble final candidate JSON
 { name, email, skills[], experience[], education[] }
-        ↓
-PostgreSQL                      -> save candidate + parsed data
+↓
+PostgreSQL                      -> save candidate + parsed data                      -> save candidate + parsed data
 ```
+
+> **Note:** An earlier approach used a rule-based section splitter (regex) to divide the CV into
+> sections before sending each to the LLM. This was deprecated because pdfplumber does not always
+> preserve newlines, making reliable splitting impossible. See `services/splitter.py` and
+> `services/merger.py` for the old code, kept for reference.
+
 
 ---
 
@@ -95,7 +106,7 @@ Rule: anything expensive to compute gets stored so it is never recomputed.
 - **Embeddings for scoring, LLM for explanation** — fast semantic matching first, expensive LLM call only when needed
 - **Celery queue** — prevents Ollama from being hammered when multiple CVs are uploaded at once
 - **Alembic** — database schema changes tracked like code, no manual SQL alterations
-
+- **pgvector** — PostgreSQL extension for storing and querying embedding vectors natively
 ---
 
 ## What the HR Dashboard Shows

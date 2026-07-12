@@ -4,7 +4,7 @@ from app.models.raw_objects import MatchResult
 class MatchRepository:
     def __init__(self, db: Session):
         self.db = db
-
+    #adds a match if does not exist or updates the existing one otherwise
     def update_or_add_match(self, candidate_id: int, job_id: int, text_score: float, skills_score: float, overall: float, recommendation: str):
         try:
             match = self.db.query(MatchResult).filter(

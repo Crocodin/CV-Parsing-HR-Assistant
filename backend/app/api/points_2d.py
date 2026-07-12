@@ -12,6 +12,7 @@ def compute_points():
     compute_umap()
     return { "status": "ok" }
 
+#it returns the status of the umap
 @router.get("/status/{task_id}")
 def umap_status(task_id: str):
     task = AsyncResult(task_id, app=celery_app)  # force it
@@ -22,6 +23,7 @@ def umap_status(task_id: str):
         "status": task.status,
     }
 
+#it gets all the umap points 
 @router.get("/points")
 def get_all_umap_points(db: Session = Depends(get_db)):
     compute_umap()  # trigger the computation of points if not already done
@@ -36,6 +38,7 @@ def get_all_umap_points(db: Session = Depends(get_db)):
         "job_points": [{"id": jp[0], "x": float(jp[1][0]), "y": float(jp[1][1]), "type": "job"} for jp in job_points]
     }
 
+#it gets the umap points for a candidate and job
 @router.get("/points/{candidate_id}/{job_id}")
 def get_umap_points(candidate_id: int, job_id: int, db: Session = Depends(get_db)):
     candidate_point = db.query(CandidateEmbedding.point_2D).filter(CandidateEmbedding.candidate_id == candidate_id).first()
