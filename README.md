@@ -1,9 +1,9 @@
 # Project Index
 AI-powered CV parsing and HR assistant platform.
 
-This project is designed to streamline the recruitment process by leveraging advanced AI techniques to parse CVs, extract relevant information, and provide recommendations for candidate-job matching. To be totally impartial, the system uses a combination of exact matches and semantic similarity to evaluate candidates against job requirements.
+This project is designed to streamline the recruitment process by leveraging advanced AI techniques to parse CVs, extract relevant information, and provide recommendations for candidate-job matching. The system uses a combination of exact matches and semantic similarity to evaluate candidates against job requirements.
 
-This project was developed for educational purposes and is not intended for commercial use. The scoring system is more then anything but good, and it should be treated as a proof of concept.
+This project was developed for educational purposes and is not intended for commercial use. The scoring system should be treated as a proof of concept.
 
 ### Architecture
 - [Architecture Overview](docs/cv-parser-architecture.md)
